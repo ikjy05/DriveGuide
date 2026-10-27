@@ -1,18 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- 사진 위 보조 버튼: 반투명 유리 알약. -->
+<!-- 반지름은 높이의 절반으로 자동 제한되므로 넉넉히 잡아 높이가 바뀌어도 항상 알약 모양이 되게 한다. -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:state_pressed="true">
         <shape>
             <solid android:color="#4DFFFFFF" />
             <stroke android:width="1.5dp" android:color="#80FFFFFF" />
-            <corners android:radius="32dp" />
+            <corners android:radius="100dp" />
         </shape>
     </item>
     <item>
         <shape>
             <solid android:color="#26FFFFFF" />
             <stroke android:width="1.5dp" android:color="#4DFFFFFF" />
-            <corners android:radius="32dp" />
+            <corners android:radius="100dp" />
         </shape>
     </item>
 </selector>

@@ -1,16 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- 사진 위 주요 버튼: 흰 알약. -->
+<!-- 반지름은 높이의 절반으로 자동 제한되므로 넉넉히 잡아 높이가 바뀌어도 항상 알약 모양이 되게 한다. -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:state_pressed="true">
         <shape>
             <solid android:color="#D9DEE5" />
-            <corners android:radius="32dp" />
+            <corners android:radius="100dp" />
         </shape>
     </item>
     <item>
         <shape>
             <solid android:color="#FFFFFF" />
-            <corners android:radius="32dp" />
+            <corners android:radius="100dp" />
         </shape>
     </item>
 </selector>
