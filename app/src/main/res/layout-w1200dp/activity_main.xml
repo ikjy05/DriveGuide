@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg"
+    android:orientation="vertical"
+    android:padding="32dp">
+
+    <TextView
+        android:id="@+id/regionText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="위치 확인 중…"
+        android:textColor="@color/text_primary"
+        android:textSize="36sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/statusText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:textColor="@color/text_secondary"
+        android:textSize="20sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:background="@drawable/tab_group_bg"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/tabAttractions"
+            style="?android:attr/borderlessButtonStyle"
+            android:background="@drawable/tab_bg"
+            android:stateListAnimator="@null"
+            android:textAllCaps="false"
+            android:textColor="@color/tab_text"
+            android:textStyle="bold"
+            android:layout_width="0dp"
+            android:layout_height="64dp"
+            android:layout_weight="1"
+            android:text="관광지"
+            android:textSize="22sp" />
+
+        <Button
+            android:id="@+id/tabCourses"
+            style="?android:attr/borderlessButtonStyle"
+            android:background="@drawable/tab_bg"
+            android:stateListAnimator="@null"
+            android:textAllCaps="false"
+            android:textColor="@color/tab_text"
+            android:textStyle="bold"
+            android:layout_width="0dp"
+            android:layout_height="64dp"
+            android:layout_weight="1"
+            android:text="드라이브·여행코스"
+            android:textSize="22sp" />
+
+        <Button
+            android:id="@+id/tabUpcoming"
+            style="?android:attr/borderlessButtonStyle"
+            android:background="@drawable/tab_bg"
+            android:stateListAnimator="@null"
+            android:textAllCaps="false"
+            android:textColor="@color/tab_text"
+            android:textStyle="bold"
+            android:layout_width="0dp"
+            android:layout_height="64dp"
+            android:layout_weight="1"
+            android:text="가는 길 추천"
+            android:textSize="22sp" />
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="16dp"
+        android:layout_weight="1">
+
+        <LinearLayout
+            android:id="@+id/listContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+    </ScrollView>
+</LinearLayout>

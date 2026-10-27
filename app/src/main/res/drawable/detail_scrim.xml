@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 상세 배경 사진 위 그라데이션: 아래와 왼쪽을 어둡게 해 흰 글씨를 읽기 쉽게 한다. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape>
+            <gradient
+                android:angle="90"
+                android:centerColor="#66000000"
+                android:centerY="0.45"
+                android:endColor="#33000000"
+                android:startColor="#E6000000" />
+        </shape>
+    </item>
+    <item>
+        <shape>
+            <gradient
+                android:angle="0"
+                android:centerColor="#1A000000"
+                android:endColor="#00000000"
+                android:startColor="#80000000" />
+        </shape>
+    </item>
+</layer-list>

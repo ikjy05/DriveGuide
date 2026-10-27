@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 코스 구성 장소 한 줄: 순번 썸네일, 이름, 경유지 버튼. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="12dp"
+    android:background="@drawable/photo_row_bg"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:padding="12dp">
+
+    <FrameLayout
+        android:id="@+id/stopThumbFrame"
+        android:layout_width="128dp"
+        android:layout_height="80dp"
+        android:background="@drawable/photo_chip_bg">
+
+        <ImageView
+            android:id="@+id/stopImage"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:importantForAccessibility="no"
+            android:scaleType="centerCrop" />
+
+        <TextView
+            android:id="@+id/stopNumber"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_margin="6dp"
+            android:background="@drawable/badge_bg"
+            android:gravity="center"
+            android:textColor="@color/on_accent"
+            android:textSize="17sp"
+            android:textStyle="bold" />
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/stopName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_weight="1"
+        android:ellipsize="end"
+        android:maxLines="2"
+        android:textColor="#FFFFFF"
+        android:textSize="21sp"
+        android:textStyle="bold" />
+
+    <Button
+        android:id="@+id/stopWaypoint"
+        style="@style/PillButton.OnPhoto"
+        android:layout_width="wrap_content"
+        android:layout_height="56dp"
+        android:drawableStart="@drawable/ic_add_location"
+        android:text="경유지"
+        android:textSize="18sp" />
+</LinearLayout>

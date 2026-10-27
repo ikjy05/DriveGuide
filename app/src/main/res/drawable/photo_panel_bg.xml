@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 사진 위 정보 패널(넓은 화면 오른쪽, 좁은 화면 아래 시트). -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="#B3000000" />
+    <corners android:radius="24dp" />
+</shape>

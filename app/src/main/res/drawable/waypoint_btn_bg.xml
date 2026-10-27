@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 카드의 "+ 경유지" 알약 버튼. 누르면 진해진다. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true">
+        <shape>
+            <solid android:color="@color/btn_primary_pressed" />
+            <corners android:radius="32dp" />
+        </shape>
+    </item>
+    <item>
+        <shape>
+            <solid android:color="@color/btn_primary" />
+            <corners android:radius="32dp" />
+        </shape>
+    </item>
+</selector>

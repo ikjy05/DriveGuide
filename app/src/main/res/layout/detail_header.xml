@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 상세 상단부(사진 위): 배지, 이름, 거리·주소, 핵심 칩, 버튼, 썸네일. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/badge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/badge_bg"
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="5dp"
+        android:textColor="#0B1220"
+        android:textSize="17sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:ellipsize="end"
+        android:maxLines="2"
+        android:shadowColor="#99000000"
+        android:shadowRadius="10"
+        android:textColor="#FFFFFF"
+        android:textSize="40sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/subtitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:shadowColor="#99000000"
+        android:shadowRadius="8"
+        android:textColor="#E6FFFFFF"
+        android:textSize="20sp" />
+
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:id="@+id/chipContainer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" />
+    </HorizontalScrollView>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btnWaypoint"
+            style="@style/PillButton.OnPhoto"
+            android:layout_width="wrap_content"
+            android:drawableStart="@drawable/ic_add_location"
+            android:text="경유지 추가" />
+
+        <Button
+            android:id="@+id/btnDestination"
+            style="@style/PillButton.OnPhotoGlass"
+            android:layout_width="wrap_content"
+            android:layout_marginStart="12dp"
+            android:drawableStart="@drawable/ic_flag"
+            android:text="목적지로" />
+
+        <Button
+            android:id="@+id/btnCall"
+            style="@style/PillButton.OnPhotoGlass"
+            android:layout_width="wrap_content"
+            android:layout_marginStart="12dp"
+            android:drawableStart="@drawable/ic_call"
+            android:text="전화" />
+    </LinearLayout>
+
+    <include layout="@layout/detail_thumbs" />
+</LinearLayout>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 보조 알약 버튼(목적지, 전화, 읽어주기). -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true">
+        <shape>
+            <solid android:color="@color/pressed" />
+            <stroke android:width="2dp" android:color="@color/accent" />
+            <corners android:radius="32dp" />
+        </shape>
+    </item>
+    <item>
+        <shape>
+            <solid android:color="@color/btn_secondary" />
+            <stroke android:width="2dp" android:color="@color/btn_secondary_outline" />
+            <corners android:radius="32dp" />
+        </shape>
+    </item>
+</selector>
