@@ -284,7 +284,7 @@ class MainActivity : Activity() {
     private fun addSectionHeader(text: String) {
         listContainer.addView(TextView(this).apply {
             this.text = text
-            textSize = 28f
+            textSize = 32f
             setTextColor(getColor(R.color.accent_text))
             setPadding(0, 16, 0, 12)
         })
@@ -293,7 +293,7 @@ class MainActivity : Activity() {
     private fun addMessage(text: String) {
         listContainer.addView(TextView(this).apply {
             this.text = text
-            textSize = 24f
+            textSize = 28f
             setTextColor(getColor(R.color.text_secondary))
         })
     }

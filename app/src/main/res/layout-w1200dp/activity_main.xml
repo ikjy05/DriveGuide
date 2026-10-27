@@ -12,7 +12,7 @@
         android:layout_height="wrap_content"
         android:text="위치 확인 중…"
         android:textColor="@color/text_primary"
-        android:textSize="40sp"
+        android:textSize="44sp"
         android:textStyle="bold" />
 
     <TextView
@@ -21,7 +21,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:textColor="@color/text_secondary"
-        android:textSize="22sp" />
+        android:textSize="28sp" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -39,10 +39,10 @@
             android:textColor="@color/tab_text"
             android:textStyle="bold"
             android:layout_width="0dp"
-            android:layout_height="64dp"
+            android:layout_height="88dp"
             android:layout_weight="1"
             android:text="관광지"
-            android:textSize="24sp" />
+            android:textSize="28sp" />
 
         <Button
             android:id="@+id/tabCourses"
@@ -53,10 +53,10 @@
             android:textColor="@color/tab_text"
             android:textStyle="bold"
             android:layout_width="0dp"
-            android:layout_height="64dp"
+            android:layout_height="88dp"
             android:layout_weight="1"
             android:text="드라이브·여행코스"
-            android:textSize="24sp" />
+            android:textSize="28sp" />
 
         <Button
             android:id="@+id/tabUpcoming"
@@ -67,10 +67,10 @@
             android:textColor="@color/tab_text"
             android:textStyle="bold"
             android:layout_width="0dp"
-            android:layout_height="64dp"
+            android:layout_height="88dp"
             android:layout_weight="1"
             android:text="가는 길 추천"
-            android:textSize="24sp" />
+            android:textSize="28sp" />
     </LinearLayout>
 
     <ScrollView

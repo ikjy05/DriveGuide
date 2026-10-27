@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <integer name="card_columns">2</integer>
-    <dimen name="card_title_size">30sp</dimen>
-    <dimen name="card_meta_size">22sp</dimen>
+    <dimen name="card_title_size">34sp</dimen>
+    <dimen name="card_meta_size">25sp</dimen>
     <dimen name="card_gap">16dp</dimen>
 </resources>

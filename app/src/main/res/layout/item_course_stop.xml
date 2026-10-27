@@ -11,8 +11,8 @@
 
     <FrameLayout
         android:id="@+id/stopThumbFrame"
-        android:layout_width="128dp"
-        android:layout_height="80dp"
+        android:layout_width="160dp"
+        android:layout_height="100dp"
         android:background="@drawable/photo_chip_bg">
 
         <ImageView
@@ -24,13 +24,13 @@
 
         <TextView
             android:id="@+id/stopNumber"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:layout_margin="6dp"
             android:background="@drawable/badge_bg"
             android:gravity="center"
             android:textColor="@color/on_accent"
-            android:textSize="19sp"
+            android:textSize="22sp"
             android:textStyle="bold" />
     </FrameLayout>
 
@@ -43,15 +43,15 @@
         android:ellipsize="end"
         android:maxLines="2"
         android:textColor="#FFFFFF"
-        android:textSize="24sp"
+        android:textSize="28sp"
         android:textStyle="bold" />
 
     <Button
         android:id="@+id/stopWaypoint"
         style="@style/PillButton.OnPhoto"
         android:layout_width="wrap_content"
-        android:layout_height="56dp"
+        android:layout_height="76dp"
         android:drawableStart="@drawable/ic_add_location"
         android:text="경유지"
-        android:textSize="21sp" />
+        android:textSize="25sp" />
 </LinearLayout>

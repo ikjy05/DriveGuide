@@ -204,12 +204,12 @@ class PlaceDetailScreen(
         chips.forEach { text ->
             container.addView(TextView(activity).apply {
                 this.text = text
-                textSize = 22f
+                textSize = 26f
                 maxLines = 1
                 // 사진 위에 얹으므로 테마와 무관하게 흰 글씨·반투명 바탕을 쓴다.
                 setTextColor(0xFFFFFFFF.toInt())
                 setBackgroundResource(R.drawable.photo_chip_bg)
-                setPadding((16 * density).toInt(), (10 * density).toInt(), (16 * density).toInt(), (10 * density).toInt())
+                setPadding((20 * density).toInt(), (12 * density).toInt(), (20 * density).toInt(), (12 * density).toInt())
                 layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
                     .apply { marginEnd = (10 * density).toInt() }
             })

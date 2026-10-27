@@ -27,7 +27,7 @@
         android:paddingHorizontal="10dp"
         android:paddingVertical="4dp"
         android:textColor="#0B1220"
-        android:textSize="18sp"
+        android:textSize="20sp"
         android:textStyle="bold" />
 
     <LinearLayout
@@ -36,7 +36,7 @@
         android:layout_gravity="bottom"
         android:gravity="bottom"
         android:orientation="horizontal"
-        android:padding="16dp">
+        android:padding="20dp">
 
         <LinearLayout
             android:layout_width="0dp"
@@ -73,19 +73,19 @@
             android:id="@+id/addWaypoint"
             style="?android:attr/borderlessButtonStyle"
             android:layout_width="wrap_content"
-            android:layout_height="60dp"
-            android:layout_marginStart="12dp"
+            android:layout_height="76dp"
+            android:layout_marginStart="16dp"
             android:background="@drawable/waypoint_btn_bg"
             android:drawableStart="@drawable/ic_add_location"
             android:drawablePadding="8dp"
             android:elevation="4dp"
-            android:paddingStart="18dp"
-            android:paddingEnd="22dp"
+            android:paddingStart="22dp"
+            android:paddingEnd="28dp"
             android:stateListAnimator="@null"
             android:text="경유지"
             android:textAllCaps="false"
             android:textColor="@color/on_btn_primary"
-            android:textSize="21sp"
+            android:textSize="26sp"
             android:textStyle="bold" />
     </LinearLayout>
 </com.example.driveguide.ui.AspectRatioFrameLayout>

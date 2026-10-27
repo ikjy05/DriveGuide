@@ -55,8 +55,8 @@
 
     <ImageButton
         android:id="@+id/backButton"
-        android:layout_width="64dp"
-        android:layout_height="64dp"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
         android:layout_margin="32dp"
         android:background="@drawable/round_dark_bg"
         android:contentDescription="뒤로"
