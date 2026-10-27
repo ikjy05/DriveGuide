@@ -16,7 +16,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textColor="#CCFFFFFF"
-        android:textSize="19sp"
+        android:textSize="23sp"
         android:visibility="gone" />
 
     <LinearLayout
@@ -47,7 +47,7 @@
                 android:layout_height="56dp"
                 android:drawableStart="@drawable/ic_volume"
                 android:text="읽어주기"
-                android:textSize="18sp" />
+                android:textSize="21sp" />
         </LinearLayout>
 
         <TextView
@@ -59,7 +59,7 @@
             android:padding="16dp"
             android:text="주행 중에는 소개글을 숨깁니다. 읽어주기로 들어보세요."
             android:textColor="#E6FFFFFF"
-            android:textSize="19sp"
+            android:textSize="23sp"
             android:visibility="gone" />
 
         <TextView
@@ -69,7 +69,7 @@
             android:layout_marginTop="12dp"
             android:lineSpacingMultiplier="1.35"
             android:textColor="#E6FFFFFF"
-            android:textSize="19sp" />
+            android:textSize="23sp" />
     </LinearLayout>
 
     <LinearLayout
@@ -98,5 +98,5 @@
         android:layout_marginTop="24dp"
         android:text="사진·정보 제공: 한국관광공사"
         android:textColor="#99FFFFFF"
-        android:textSize="15sp" />
+        android:textSize="17sp" />
 </LinearLayout>

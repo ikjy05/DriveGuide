@@ -204,7 +204,7 @@ class PlaceDetailScreen(
         chips.forEach { text ->
             container.addView(TextView(activity).apply {
                 this.text = text
-                textSize = 18f
+                textSize = 22f
                 maxLines = 1
                 // 사진 위에 얹으므로 테마와 무관하게 흰 글씨·반투명 바탕을 쓴다.
                 setTextColor(0xFFFFFFFF.toInt())

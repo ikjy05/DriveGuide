@@ -13,7 +13,7 @@
         android:paddingHorizontal="12dp"
         android:paddingVertical="5dp"
         android:textColor="#0B1220"
-        android:textSize="17sp"
+        android:textSize="19sp"
         android:textStyle="bold" />
 
     <TextView
@@ -26,7 +26,7 @@
         android:shadowColor="#99000000"
         android:shadowRadius="10"
         android:textColor="#FFFFFF"
-        android:textSize="40sp"
+        android:textSize="44sp"
         android:textStyle="bold" />
 
     <TextView
@@ -39,7 +39,7 @@
         android:shadowColor="#99000000"
         android:shadowRadius="8"
         android:textColor="#E6FFFFFF"
-        android:textSize="20sp" />
+        android:textSize="23sp" />
 
     <HorizontalScrollView
         android:layout_width="match_parent"

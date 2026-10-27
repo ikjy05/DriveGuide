@@ -30,7 +30,7 @@
             android:background="@drawable/badge_bg"
             android:gravity="center"
             android:textColor="@color/on_accent"
-            android:textSize="17sp"
+            android:textSize="19sp"
             android:textStyle="bold" />
     </FrameLayout>
 
@@ -43,7 +43,7 @@
         android:ellipsize="end"
         android:maxLines="2"
         android:textColor="#FFFFFF"
-        android:textSize="21sp"
+        android:textSize="24sp"
         android:textStyle="bold" />
 
     <Button
@@ -53,5 +53,5 @@
         android:layout_height="56dp"
         android:drawableStart="@drawable/ic_add_location"
         android:text="경유지"
-        android:textSize="18sp" />
+        android:textSize="21sp" />
 </LinearLayout>
