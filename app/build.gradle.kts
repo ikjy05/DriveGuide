@@ -10,13 +10,13 @@ val localProps = Properties().apply {
 }
 
 android {
-    namespace = "com.example.driveguide"
+    namespace = "zone.dal.driveguide"
     // 주행 중 화면 제한(CarUxRestrictionsManager)
     useLibrary("android.car")
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.driveguide"
+        applicationId = "zone.dal.driveguide"
         minSdk = 29
         targetSdk = 35
         versionCode = 1

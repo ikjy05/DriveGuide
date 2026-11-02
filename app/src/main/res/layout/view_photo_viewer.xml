@@ -7,7 +7,7 @@
     android:clickable="true"
     android:focusable="true">
 
-    <com.example.driveguide.ui.PhotoPager
+    <zone.dal.driveguide.ui.PhotoPager
         android:id="@+id/photoPager"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
