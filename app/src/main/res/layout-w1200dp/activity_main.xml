@@ -6,22 +6,44 @@
     android:orientation="vertical"
     android:padding="32dp">
 
-    <TextView
-        android:id="@+id/regionText"
-        android:layout_width="wrap_content"
+    <!-- 앱 아이콘 + 지역 이름(Pleos 기본 앱처럼 왼쪽 위에 아이콘을 둔다) -->
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="위치 확인 중…"
-        android:textColor="@color/text_primary"
-        android:textSize="44sp"
-        android:textStyle="bold" />
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
 
-    <TextView
-        android:id="@+id/statusText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:textColor="@color/text_secondary"
-        android:textSize="28sp" />
+        <ImageView
+            android:layout_width="88dp"
+            android:layout_height="88dp"
+            android:layout_marginEnd="22dp"
+            android:importantForAccessibility="no"
+            android:src="@mipmap/ic_launcher" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/regionText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="위치 확인 중…"
+                android:textColor="@color/text_primary"
+                android:textSize="44sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/statusText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textColor="@color/text_secondary"
+                android:textSize="28sp" />
+        </LinearLayout>
+    </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
