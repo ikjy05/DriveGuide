@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 상세 화면 오른쪽 위: 이전·다음 장소 버튼, 현재 위치(3 / 10), 다음 장소 이름. 좌우 스와이프와 같은 동작이다. -->
+<!-- 상세 화면 왼쪽 위(뒤로 버튼 옆): 이전·다음 장소 버튼과 현재 위치(3 / 10). 좌우 스와이프와 같은 동작이다. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/pager"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:layout_gravity="top|end"
-    android:gravity="end"
+    android:layout_gravity="top|start"
     android:orientation="vertical">
 
     <LinearLayout
@@ -41,18 +40,4 @@
             android:contentDescription="다음 장소"
             android:src="@drawable/ic_chevron_right" />
     </LinearLayout>
-
-    <TextView
-        android:id="@+id/nextName"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="12dp"
-        android:ellipsize="end"
-        android:maxWidth="420dp"
-        android:maxLines="1"
-        android:shadowColor="#CC000000"
-        android:shadowRadius="8"
-        android:textColor="#E6FFFFFF"
-        android:textSize="21sp" />
 </LinearLayout>

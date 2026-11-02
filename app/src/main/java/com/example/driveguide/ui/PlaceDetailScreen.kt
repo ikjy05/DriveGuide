@@ -34,7 +34,7 @@ import kotlin.math.abs
 /**
  * 장소 상세 화면. 사진을 창 전체에 깔고 그 위에 정보를 얹는다.
  * 이전·현재·다음 장소 화면을 빈틈 없이 나란히 두고, 좌우로 끌면 손가락을 1:1로 따라가다
- * 놓으면 남은 거리를 감속하며 넘긴다(오른쪽 위 화살표도 같은 동작). 이웃 장소의 상세 정보는 미리 불러 둔다.
+ * 놓으면 남은 거리를 감속하며 넘긴다(왼쪽 위 화살표도 같은 동작). 이웃 장소의 상세 정보는 미리 불러 둔다.
  * 정차 중에는 사진이 5초마다 바뀌고, 주행 중에는 멈춘다. 사진 부분을 탭하면 전체 보기([PhotoViewer]).
  * Activity 콘텐츠 위에 덮어 띄우고(addContentView), 분할 화면 전환 시
  * [reattach]로 새 창 폭에 맞는 레이아웃(layout / layout-w1200dp)으로 다시 그린다.
@@ -204,7 +204,6 @@ class PlaceDetailScreen(
             alpha = if (isEnabled) 1f else 0.3f
             setOnClickListener { settle(1) }
         }
-        swipe.findViewById<TextView>(R.id.nextName).text = places.getOrNull(index + 1)?.let { "다음 · ${it.title}" } ?: ""
     }
 
     /** 남은 거리를 감속하며 마저 이동한다. step=±1이면 이웃 장소가 가운데로 온다. */
