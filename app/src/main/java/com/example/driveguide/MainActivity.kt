@@ -16,6 +16,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import com.example.driveguide.navi.CourseLeg
 import com.example.driveguide.navi.NaviBridge
 import com.example.driveguide.navi.VehicleLocation
 import com.example.driveguide.notify.PlaceNotifier
@@ -91,6 +92,7 @@ class MainActivity : Activity() {
         engine = RecommendationEngine(tourApi, courseRepository)
         upcomingEngine = UpcomingEngine(tourApi, courseRepository)
         navi = NaviBridge(this)
+        navi.onCourseLeg = { leg -> runOnUiThread { announceCourseLeg(leg) } }
         navi.start(scope)
 
         detailScreen = PlaceDetailScreen(this, scope, tourApi, object : PlaceDetailScreen.Actions {
@@ -98,6 +100,9 @@ class MainActivity : Activity() {
             override fun setDestination(place: Place) {
                 navi.setDestination(place)
                 Toast.makeText(this@MainActivity, "${place.title}(으)로 안내를 시작합니다", Toast.LENGTH_SHORT).show()
+            }
+            override fun startCourse(course: Place, stops: List<Place>) {
+                navi.startCourse(stops)
             }
             override fun speak(text: String) {
                 tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "detail")
@@ -399,6 +404,14 @@ class MainActivity : Activity() {
         view.minimumHeight = scroll.height
         if (scroll.height == 0) scroll.post { view.minimumHeight = scroll.height }
         listContainer.addView(view)
+    }
+
+    /** 코스 구간 안내가 시작될 때 들르는 순서를 알려준다. */
+    private fun announceCourseLeg(leg: CourseLeg) {
+        val names = leg.stops.joinToString(" → ") { it.title }
+        val rest = if (leg.remaining > 0) " 도착하면 남은 ${leg.remaining}곳을 이어서 안내합니다." else ""
+        Toast.makeText(this, "코스 안내: $names", Toast.LENGTH_LONG).show()
+        tts?.speak("코스 안내를 시작합니다. ${leg.stops.joinToString(", ") { it.title }} 순서로 들릅니다.$rest", TextToSpeech.QUEUE_FLUSH, null, "course")
     }
 
     private fun addWaypoint(place: Place) {

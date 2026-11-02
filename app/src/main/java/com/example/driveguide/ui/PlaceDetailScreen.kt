@@ -27,6 +27,9 @@ import com.example.driveguide.tour.PlaceType
 import com.example.driveguide.tour.TourApiClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.abs
@@ -48,6 +51,8 @@ class PlaceDetailScreen(
     interface Actions {
         fun addWaypoint(place: Place)
         fun setDestination(place: Place)
+        /** 코스 장소들을 순서대로 내비 경로로 보낸다. */
+        fun startCourse(course: Place, stops: List<Place>)
         fun speak(text: String)
         /** 현재 위치 기준 거리 문구(예: "2.3km", "출발지까지 4.1km"). */
         fun distanceLabel(place: Place): String
@@ -291,8 +296,17 @@ class PlaceDetailScreen(
         bindSubtitle(v, p)
         v.findViewById<TextView>(R.id.badge).text = p.type.label
         v.findViewById<View>(R.id.backButton).setOnClickListener { close() }
-        v.findViewById<Button>(R.id.btnWaypoint).setOnClickListener { actions.addWaypoint(p) }
-        v.findViewById<Button>(R.id.btnDestination).setOnClickListener { actions.setDestination(p) }
+        val isCourse = p.type == PlaceType.COURSE
+        v.findViewById<Button>(R.id.btnWaypoint).apply {
+            // 코스는 포함 장소 전체를 내비 경로로 보내는 것이 주요 동작이다.
+            text = if (isCourse) "코스 안내" else "경유지 추가"
+            setCompoundDrawablesRelativeWithIntrinsicBounds(if (isCourse) R.drawable.ic_route else R.drawable.ic_add_location, 0, 0, 0)
+            setOnClickListener { if (isCourse) startCourse(p) else actions.addWaypoint(p) }
+        }
+        v.findViewById<Button>(R.id.btnDestination).apply {
+            text = if (isCourse) "출발지로" else "목적지로"
+            setOnClickListener { actions.setDestination(p) }
+        }
         v.findViewById<View>(R.id.btnCall).visibility = View.GONE
         // 이웃 화면은 끄는 동안 보이기만 하므로 화살표 묶음은 숨긴다(가운데 화면에서 다시 보인다).
         v.findViewById<View>(R.id.pager).visibility = View.GONE
@@ -476,6 +490,30 @@ class PlaceDetailScreen(
             }
         }
         return row
+    }
+
+    private var courseJob: Job? = null
+
+    /** 코스 포함 장소의 좌표를 모아(detailInfo2에는 없어서 장소마다 조회) 순서대로 내비에 보낸다. */
+    private fun startCourse(course: Place) {
+        if (courseJob?.isActive == true) return
+        courseJob = scope.launch {
+            val stops = (details[course.id] ?: runCatching { tourApi.detail(course) }.getOrNull())?.courseStops.orEmpty()
+            if (stops.isEmpty()) {
+                // 포함 장소를 모르면 출발지만 안내한다.
+                actions.setDestination(course)
+                return@launch
+            }
+            Toast.makeText(activity, "코스 경로를 준비하는 중…", Toast.LENGTH_SHORT).show()
+            val places = coroutineScope {
+                stops.map { stop -> async { runCatching { tourApi.placeById(stop.contentId) }.getOrNull() } }.awaitAll()
+            }.filterNotNull()
+            if (places.isEmpty()) {
+                Toast.makeText(activity, "코스 장소의 위치를 찾지 못했습니다", Toast.LENGTH_SHORT).show()
+                return@launch
+            }
+            actions.startCourse(course, places)
+        }
     }
 
     private fun applyRestriction(v: View, p: Place) {

@@ -44,7 +44,8 @@ Pleos 내비에서 현재 위치를 받아, 지나가는 지역의 관광지와 
 - 관광지: `detailCommon2`(소개·전화), `detailIntro2`(이용 시간·휴무·주차·문의처), `detailImage2`(사진 갤러리)를 조회합니다. 여행코스: `detailIntro2`(총 거리·소요 시간), `detailInfo2`(포함 장소)를 조회하고, 포함 장소의 경유지 버튼을 누르면 `detailCommon2`로 좌표를 받아 경유지로 넣습니다.
 - 좌우 스와이프(또는 왼쪽 위 뒤로 버튼 옆 ‹ 3 / 10 › 버튼)로 같은 목록의 이전·다음 장소로 넘깁니다. 이전·현재·다음 장소 화면을 빈틈 없이 나란히 두고 손가락을 1:1로 따라가며, 이웃 장소의 상세 정보는 미리 불러 둡니다(`ui/PlaceDetailScreen.kt`, `ui/SwipeFrameLayout.kt`). 썸네일·칩 줄 위의 가로 드래그는 제외합니다. 정차 중에는 사진이 5초마다 바뀌고 주행 중에는 멈춥니다.
 - 사진이 보이는 빈 곳을 탭하면 사진 전체 보기(`ui/PhotoViewer.kt`)가 열립니다. 잘림 없이 보여주고, 좌우로 밀면 이웃 사진이 빈틈 없이 손가락을 따라 들어오며(`ui/PhotoPager.kt`, 3장 이상이면 끝에서 처음으로 이어짐), 탭·X·뒤로 키로 닫습니다. 닫으면 마지막으로 본 사진이 상세에 이어서 표시됩니다.
-- 버튼: 경유지 추가, 목적지로(NaviHelper `requestRoute`), 전화(문의처에서 번호 추출, 다이얼러 열기), 읽어주기(TTS).
+- **코스 안내**(여행코스): 포함 장소의 좌표를 `detailCommon2`로 모아 NaviHelper `requestRouteWithWaypoints`로 한 번에 보냅니다. 내비 지도에 실제 도로를 따라 코스 경로가 그려집니다. 내비 경유지는 2곳까지(`WaypointIndex` FIRST·SECOND)라 3곳씩(경유지 2 + 목적지 1) 끊어 보내고, 구간 목적지에 도착(`onRouteEnded`)하면 남은 장소로 이어서 안내합니다. 안내를 취소하거나 내비에서 다른 목적지로 바꾸면 이어가기를 멈춥니다(`navi/NaviBridge.kt`). 구간 이어가기는 에뮬레이터에서 차가 움직이지 않아 확인하지 못했습니다.
+- 버튼: 경유지 추가(코스는 코스 안내), 목적지로(코스는 출발지로, NaviHelper `requestRoute`), 전화(문의처에서 번호 추출, 다이얼러 열기), 읽어주기(TTS).
 - 주행 중에는 `CarUxRestrictionsManager`로 화면 제한 상태를 받아 소개글을 숨기고 읽어주기만 남깁니다(`ui/DrivingRestriction.kt`).
 
 ## 알려진 제약 / TODO

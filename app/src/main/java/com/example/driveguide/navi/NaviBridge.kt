@@ -6,6 +6,7 @@ import ai.pleos.playground.navi.data.CurrentLocationInfo
 import ai.pleos.playground.navi.data.DestinationInfo
 import ai.pleos.playground.navi.data.RequestWaypointInfo
 import ai.pleos.playground.navi.data.RouteInfo
+import ai.pleos.playground.navi.data.RouteWithWaypointsRequest
 import ai.pleos.playground.navi.data.RouteStartInfo
 import ai.pleos.playground.navi.data.WaypointChangedInfo
 import ai.pleos.playground.navi.data.WaypointInfo
@@ -39,6 +40,9 @@ data class VehicleLocation(
     val heading: Double? = null,
 )
 
+/** 코스 안내 한 구간. [remaining]은 이 구간 뒤에 남은 장소 수. */
+data class CourseLeg(val stops: List<Place>, val remaining: Int)
+
 /**
  * Pleos NaviHelper SDK 래퍼.
  * NaviHelper는 요청(get*Info)과 응답(on*Info 콜백)이 분리되어 있으므로
@@ -63,6 +67,14 @@ class NaviBridge(context: Context) {
     private var lastMoveLat: Double? = null
     private var lastMoveLng: Double? = null
     private var lastHeading: Double? = null
+
+    /** 코스 안내에서 아직 보내지 않은 장소들. 지금 구간의 목적지에 도착하면 다음 구간으로 이어서 보낸다. */
+    @Volatile private var pendingCourseStops: List<Place> = emptyList()
+    /** 지금 안내 중인 코스 구간의 목적지. 사용자가 내비에서 다른 목적지로 바꾸면 코스 안내를 멈추는 데 쓴다. */
+    @Volatile private var courseLegEnd: Place? = null
+
+    /** 코스 구간 안내를 시작할 때 부른다(남은 구간이 이어질 때 포함). 메인 스레드가 아닐 수 있다. */
+    var onCourseLeg: ((CourseLeg) -> Unit)? = null
 
     // 목적지와 경유지는 서로 다른 콜백으로 오므로 따로 보관했다가 합친다.
     @Volatile private var destination: RouteTarget? = null
@@ -103,8 +115,16 @@ class NaviBridge(context: Context) {
         override fun onDestinationChanged() = requestRoute()
         override fun onWaypointChanged(waypointChangedInfo: WaypointChangedInfo) = requestRoute()
 
-        override fun onRouteCancelled() = clearRoute()
-        override fun onRouteEnded() = clearRoute()
+        override fun onRouteCancelled() {
+            stopCourse()
+            clearRoute()
+        }
+
+        override fun onRouteEnded() {
+            clearRoute()
+            // 코스 구간 목적지에 도착했으면 남은 장소로 이어서 안내한다.
+            if (pendingCourseStops.isNotEmpty()) sendCourseLeg(pendingCourseStops)
+        }
 
         override fun onError(errorCode: NaviErrorCode) {
             Log.w(TAG, "Navi error: $errorCode")
@@ -168,7 +188,42 @@ class NaviBridge(context: Context) {
     }
 
     private fun publishRoute() {
-        _route.value = destination?.let { RouteState(waypoints, it) }
+        val dest = destination
+        // 내비에서 다른 목적지로 바꿨으면 코스 이어가기를 멈춘다.
+        courseLegEnd?.let { end ->
+            if (dest != null && distanceMeters(end.latitude, end.longitude, dest.latitude, dest.longitude) > COURSE_MATCH_METERS) stopCourse()
+        }
+        _route.value = dest?.let { RouteState(waypoints, it) }
+    }
+
+    /**
+     * 코스 장소들을 순서대로 안내한다. 내비는 경유지를 2곳까지만 받으므로 3곳씩(경유지 2 + 목적지 1) 끊어 보내고,
+     * 구간 목적지에 도착하면 다음 3곳을 이어서 보낸다.
+     */
+    fun startCourse(stops: List<Place>) {
+        if (stops.isEmpty()) return
+        sendCourseLeg(stops)
+    }
+
+    private fun sendCourseLeg(stops: List<Place>) {
+        val leg = stops.take(COURSE_STOPS_PER_LEG)
+        val end = leg.last()
+        pendingCourseStops = stops.drop(leg.size)
+        courseLegEnd = end
+        naviHelper.requestRouteWithWaypoints(
+            RouteWithWaypointsRequest(
+                destination = routeInfo(end),
+                waypoints = leg.dropLast(1).mapIndexed { i, p ->
+                    waypointRequest(p, if (i == 0) WaypointIndex.FIRST else WaypointIndex.SECOND)
+                },
+            )
+        )
+        onCourseLeg?.invoke(CourseLeg(leg, pendingCourseStops.size))
+    }
+
+    private fun stopCourse() {
+        pendingCourseStops = emptyList()
+        courseLegEnd = null
     }
 
     /** 추천 장소를 첫 번째 경유지로 추가한다. 결과는 내비 화면/onWaypointChanged로 반영된다. */
@@ -178,35 +233,39 @@ class NaviBridge(context: Context) {
 
     /** 장소를 목적지로 설정해 바로 안내를 시작한다. */
     fun setDestination(place: Place) {
-        naviHelper.requestRoute(
-            RouteInfo(
-                latitude = place.latitude,
-                longitude = place.longitude,
-                displayLatitude = null,
-                displayLongitude = null,
-                poiName = place.title,
-                poiId = "",
-                address = place.address,
-                poiSubId = "0",
-            )
-        )
+        stopCourse()
+        naviHelper.requestRoute(routeInfo(place))
     }
+
+    private fun routeInfo(place: Place) = RouteInfo(
+        latitude = place.latitude,
+        longitude = place.longitude,
+        displayLatitude = null,
+        displayLongitude = null,
+        poiName = place.title,
+        poiId = "",
+        address = place.address,
+        poiSubId = "0",
+    )
 
     companion object {
         private const val TAG = "NaviBridge"
         private const val ROUTE_POLL_EVERY = 3
+        /** 경유지 2곳 + 목적지 1곳. NaviHelper의 WaypointIndex가 FIRST·SECOND뿐이다. */
+        private const val COURSE_STOPS_PER_LEG = 3
+        private const val COURSE_MATCH_METERS = 300.0
 
         // 내비가 경유지 좌표를 (0, 0)으로 돌려주는 경우가 있어, 앱에서 추가한 경유지의 좌표를 이름으로 기억해 둔다.
         // 알림에서 추가한 경유지도 같은 프로세스에서 처리되므로 프로세스 전역으로 둔다.
         private val addedWaypoints = ConcurrentHashMap<String, Pair<Double, Double>>()
 
-        private fun waypointRequest(place: Place): RequestWaypointInfo {
+        private fun waypointRequest(place: Place, index: WaypointIndex = WaypointIndex.FIRST): RequestWaypointInfo {
             addedWaypoints[place.title] = place.latitude to place.longitude
             return RequestWaypointInfo(
                 latitude = place.latitude,
                 longitude = place.longitude,
                 poiName = place.title,
-                waypointIndex = WaypointIndex.FIRST,
+                waypointIndex = index,
                 poiId = "", // TourAPI contentid는 내비 POI ID가 아니므로 좌표 기반으로 요청
                 address = place.address,
                 poiSubId = "0",
