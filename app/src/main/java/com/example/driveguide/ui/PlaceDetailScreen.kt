@@ -28,7 +28,7 @@ import kotlinx.coroutines.launch
 /**
  * 장소 상세 화면. 사진을 창 전체에 깔고 그 위에 정보를 얹는다.
  * 좌우 스와이프(또는 오른쪽 위 화살표)로 같은 목록의 이전·다음 장소로 넘긴다.
- * 정차 중에는 사진이 5초마다 바뀌고, 주행 중에는 멈춘다.
+ * 정차 중에는 사진이 5초마다 바뀌고, 주행 중에는 멈춘다. 사진 부분을 탭하면 전체 보기([PhotoViewer]).
  * Activity 콘텐츠 위에 덮어 띄우고(addContentView), 분할 화면 전환 시
  * [reattach]로 새 창 폭에 맞는 레이아웃(layout / layout-w1200dp)으로 다시 그린다.
  */
@@ -52,6 +52,7 @@ class PlaceDetailScreen(
     private var index = 0
     private val place: Place? get() = places.getOrNull(index)
     private var slideshowJob: Job? = null
+    private val photoViewer = PhotoViewer(activity, scope)
     private var detail: PlaceDetail? = null
     private var selectedImage = 0
     private var restricted = false
@@ -67,7 +68,15 @@ class PlaceDetailScreen(
         openCurrent(slideFrom = 0)
     }
 
+    /** 뒤로 키: 사진 전체 보기 → 상세 순서로 닫는다. 닫은 게 있으면 true. */
+    fun onBack(): Boolean = when {
+        photoViewer.isShowing -> { photoViewer.close(); true }
+        isShowing -> { close(); true }
+        else -> false
+    }
+
     fun close() {
+        if (photoViewer.isShowing) photoViewer.close()
         loadJob?.cancel()
         slideshowJob?.cancel()
         (view?.parent as? ViewGroup)?.removeView(view)
@@ -268,7 +277,7 @@ class PlaceDetailScreen(
     private fun restartSlideshow() {
         slideshowJob?.cancel()
         val images = detail?.images ?: return
-        if (restricted || images.size <= 1) return
+        if (restricted || images.size <= 1 || photoViewer.isShowing) return
         slideshowJob = scope.launch {
             while (true) {
                 delay(SLIDESHOW_INTERVAL_MS)
@@ -284,6 +293,12 @@ class PlaceDetailScreen(
         swipe.onSwipe = ::move
         swipe.canSwipe = { step -> index + step in places.indices }
         swipe.excludedViews = listOf(v.findViewById(R.id.thumbScroll), v.findViewById(R.id.chipScroll))
+        // 사진이 보이는 빈 곳을 탭하면 전체 보기. 정보 패널·버튼 위 탭은 제외한다.
+        swipe.onTap = ::openPhotoViewer
+        swipe.tapExcludedViews = listOfNotNull<View>(
+            v.findViewById(R.id.sheet), v.findViewById(R.id.header), v.findViewById(R.id.bodyPanel),
+            v.findViewById(R.id.pager), v.findViewById(R.id.backButton),
+        )
 
         v.findViewById<View>(R.id.pager).visibility = if (places.size > 1) View.VISIBLE else View.GONE
         v.findViewById<TextView>(R.id.pagerText).text = "${index + 1} / ${places.size}"
@@ -298,6 +313,20 @@ class PlaceDetailScreen(
             setOnClickListener { move(1) }
         }
         v.findViewById<TextView>(R.id.nextName).text = places.getOrNull(index + 1)?.let { "다음 · ${it.title}" } ?: ""
+    }
+
+    private fun openPhotoViewer() {
+        val place = place ?: return
+        val images = detail?.images?.takeIf { it.isNotEmpty() } ?: listOfNotNull(place.imageUrl)
+        if (images.isEmpty()) return
+        slideshowJob?.cancel()
+        photoViewer.show(images, selectedImage.coerceIn(0, images.lastIndex), place.title) { last ->
+            // 전체 보기에서 마지막으로 본 사진을 상세에도 이어서 보여준다.
+            view?.let { v ->
+                if (images.size > 1) selectImage(v, images, last, fade = false)
+            }
+            restartSlideshow()
+        }
     }
 
     /** 이용 시간·휴무·주차·코스 거리 같은 핵심 정보를 한 줄짜리 칩으로 보여준다. */

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 사진 전체 보기: 검은 바탕에 사진 전체(잘림 없음). 좌우로 밀면 사진 넘김, 탭하거나 X로 닫기. -->
+<com.example.driveguide.ui.SwipeFrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000"
+    android:clickable="true"
+    android:focusable="true">
+
+    <ImageView
+        android:id="@+id/photo"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:importantForAccessibility="no"
+        android:scaleType="fitCenter" />
+
+    <ImageButton
+        android:id="@+id/closeButton"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_margin="24dp"
+        android:background="@drawable/round_dark_bg"
+        android:contentDescription="닫기"
+        android:src="@drawable/ic_close" />
+
+    <TextView
+        android:id="@+id/counter"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:layout_margin="32dp"
+        android:background="@drawable/pager_bg"
+        android:paddingHorizontal="24dp"
+        android:paddingVertical="12dp"
+        android:textColor="#FFFFFF"
+        android:textSize="24sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/caption"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="28dp"
+        android:background="@drawable/pager_bg"
+        android:paddingHorizontal="24dp"
+        android:paddingVertical="12dp"
+        android:textColor="#E6FFFFFF"
+        android:textSize="21sp" />
+</com.example.driveguide.ui.SwipeFrameLayout>

@@ -13,6 +13,7 @@ import kotlin.math.abs
 /**
  * 좌우 스와이프를 감지하는 FrameLayout. 끄는 동안 화면을 손가락을 따라 조금 움직이고,
  * 충분히 밀면 [onSwipe](+1 다음, -1 이전)를 부른다. 세로 스크롤과 [excludedViews] 위의 가로 드래그는 건드리지 않는다.
+ * 움직이지 않고 손을 떼면 [onTap]을 부른다. 단 [tapExcludedViews](정보 패널·버튼 등) 위의 탭은 제외한다.
  */
 class SwipeFrameLayout @JvmOverloads constructor(
     context: Context,
@@ -24,6 +25,8 @@ class SwipeFrameLayout @JvmOverloads constructor(
     var excludedViews: List<View> = emptyList()
     /** 넘길 곳이 있는지. false면 끌어도 거의 움직이지 않는다. */
     var canSwipe: (Int) -> Boolean = { true }
+    var onTap: (() -> Unit)? = null
+    var tapExcludedViews: List<View> = emptyList()
 
     private val touchSlop = ViewConfiguration.get(context).scaledTouchSlop
     private val minFlingVelocity = ViewConfiguration.get(context).scaledMinimumFlingVelocity * 4
@@ -31,6 +34,7 @@ class SwipeFrameLayout @JvmOverloads constructor(
     private var downY = 0f
     private var dragging = false
     private var ignore = false
+    private var tapCandidate = false
     private var velocity: VelocityTracker? = null
 
     override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
@@ -45,7 +49,8 @@ class SwipeFrameLayout @JvmOverloads constructor(
                 downX = ev.x
                 downY = ev.y
                 dragging = false
-                ignore = isOnExcluded(ev.rawX.toInt(), ev.rawY.toInt())
+                ignore = isOnExcluded(excludedViews, ev.rawX.toInt(), ev.rawY.toInt())
+                tapCandidate = !isOnExcluded(tapExcludedViews, ev.rawX.toInt(), ev.rawY.toInt())
                 velocity?.recycle()
                 velocity = VelocityTracker.obtain().also { it.addMovement(ev) }
             }
@@ -54,11 +59,18 @@ class SwipeFrameLayout @JvmOverloads constructor(
                 velocity?.addMovement(ev)
                 val dx = ev.x - downX
                 val dy = ev.y - downY
+                if (abs(dx) > touchSlop || abs(dy) > touchSlop) tapCandidate = false
                 if (!ignore && abs(dx) > touchSlop * 2 && abs(dx) > abs(dy) * 2) {
                     dragging = true
                     parent?.requestDisallowInterceptTouchEvent(true)
                 }
             }
+            // 자식(세로 스크롤 등)이 터치를 가져가도 부모 가로채기 단계에서 손 뗌을 볼 수 있다.
+            MotionEvent.ACTION_UP -> if (!dragging && tapCandidate) {
+                tapCandidate = false
+                onTap?.invoke()
+            }
+            MotionEvent.ACTION_CANCEL -> tapCandidate = false
         }
     }
 
@@ -92,10 +104,10 @@ class SwipeFrameLayout @JvmOverloads constructor(
         return true
     }
 
-    private fun isOnExcluded(rawX: Int, rawY: Int): Boolean {
+    private fun isOnExcluded(views: List<View>, rawX: Int, rawY: Int): Boolean {
         val rect = Rect()
         val loc = IntArray(2)
-        return excludedViews.any { v ->
+        return views.any { v ->
             if (!v.isShown) return@any false
             v.getLocationOnScreen(loc)
             rect.set(loc[0], loc[1], loc[0] + v.width, loc[1] + v.height)

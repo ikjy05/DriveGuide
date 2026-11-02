@@ -169,7 +169,7 @@ class MainActivity : Activity() {
 
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
-        if (detailScreen.isShowing) detailScreen.close() else super.onBackPressed()
+        if (!detailScreen.onBack()) super.onBackPressed()
     }
 
     override fun onDestroy() {

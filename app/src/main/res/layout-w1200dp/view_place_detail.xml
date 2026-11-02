@@ -32,7 +32,11 @@
             android:gravity="bottom"
             android:orientation="vertical">
 
-            <include layout="@layout/detail_header" />
+            <include
+                android:id="@+id/header"
+                layout="@layout/detail_header"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
         </LinearLayout>
 
         <ScrollView
