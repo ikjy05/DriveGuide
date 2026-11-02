@@ -1,18 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 사진 전체 보기: 검은 바탕에 사진 전체(잘림 없음). 좌우로 밀면 사진 넘김, 탭하거나 X로 닫기. -->
-<com.example.driveguide.ui.SwipeFrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- 사진 전체 보기: 검은 바탕에 사진 전체(잘림 없음). 좌우로 밀면 이웃 사진이 붙어 들어오고, 탭하거나 X로 닫기. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#000000"
     android:clickable="true"
     android:focusable="true">
 
-    <ImageView
-        android:id="@+id/photo"
+    <com.example.driveguide.ui.PhotoPager
+        android:id="@+id/photoPager"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:importantForAccessibility="no"
-        android:scaleType="fitCenter" />
+        android:layout_height="match_parent" />
 
     <ImageButton
         android:id="@+id/closeButton"
@@ -47,4 +45,4 @@
         android:paddingVertical="12dp"
         android:textColor="#E6FFFFFF"
         android:textSize="21sp" />
-</com.example.driveguide.ui.SwipeFrameLayout>
+</FrameLayout>
