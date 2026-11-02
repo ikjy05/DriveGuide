@@ -10,10 +10,12 @@ import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
+import zone.dal.driveguide.R
 
-enum class PlaceType(val contentTypeId: Int, val label: String) {
-    ATTRACTION(12, "관광지"),
-    COURSE(25, "여행코스"),
+/** [colorRes]는 종류 배지의 색 점. */
+enum class PlaceType(val contentTypeId: Int, val label: String, val colorRes: Int) {
+    ATTRACTION(12, "관광지", R.color.type_attraction),
+    COURSE(25, "여행코스", R.color.type_course),
 }
 
 data class Place(

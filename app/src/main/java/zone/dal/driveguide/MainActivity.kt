@@ -2,6 +2,7 @@ package zone.dal.driveguide
 
 import android.Manifest
 import android.app.Activity
+import android.content.res.ColorStateList
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.graphics.Typeface
@@ -320,6 +321,7 @@ class MainActivity : Activity() {
         // 종류가 섞이는 가는 길 탭에서만 배지로 구분한다(다른 탭은 탭 이름이 종류다).
         card.findViewById<TextView>(R.id.badge).apply {
             text = if (place.type == PlaceType.COURSE) "코스" else "관광지"
+            compoundDrawableTintList = ColorStateList.valueOf(getColor(place.type.colorRes))
             visibility = if (selectedTab == Tab.UPCOMING) View.VISIBLE else View.GONE
         }
         card.findViewById<Button>(R.id.addWaypoint).setOnClickListener { addWaypoint(place) }

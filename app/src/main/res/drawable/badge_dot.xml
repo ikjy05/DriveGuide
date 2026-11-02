@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 배지 앞 종류 색 점. 색은 코드에서 drawableTint로 정한다(관광지 하늘색, 코스 주황). -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval">
+    <solid android:color="#FFFFFFFF" />
+    <size android:width="12dp" android:height="12dp" />
+</shape>

@@ -28,4 +28,8 @@
     <!-- 빈 상태 그림 -->
     <color name="empty_road">#D5DCE4</color>
     <color name="empty_lane">#FFFFFF</color>
+
+    <!-- 종류 배지 색 점. 사진 위에 얹으므로 테마와 무관하게 같은 색이다(values-night에 두지 않음). -->
+    <color name="type_attraction">#5BA8F5</color>
+    <color name="type_course">#FFB020</color>
 </resources>

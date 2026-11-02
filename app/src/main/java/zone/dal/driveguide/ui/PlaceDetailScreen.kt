@@ -4,6 +4,7 @@ import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.animation.ValueAnimator
 import android.app.Activity
+import android.content.res.ColorStateList
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
@@ -300,6 +301,7 @@ class PlaceDetailScreen(
         bindSubtitle(v, p)
         v.findViewById<TextView>(R.id.badge).apply {
             text = p.type.label
+            compoundDrawableTintList = ColorStateList.valueOf(activity.getColor(p.type.colorRes))
             visibility = if (showBadge) View.VISIBLE else View.GONE
         }
         v.findViewById<View>(R.id.backButton).setOnClickListener { close() }

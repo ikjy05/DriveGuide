@@ -10,10 +10,14 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="@drawable/badge_bg"
-        android:paddingHorizontal="12dp"
-        android:paddingVertical="5dp"
-        android:textColor="#0B1220"
-        android:textSize="21sp"
+        android:drawableStart="@drawable/badge_dot"
+        android:drawablePadding="10dp"
+        android:gravity="center_vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="20dp"
+        android:paddingVertical="8dp"
+        android:textColor="#FFFFFF"
+        android:textSize="22sp"
         android:textStyle="bold" />
 
     <TextView
