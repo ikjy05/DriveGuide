@@ -21,6 +21,12 @@ class SwipeFrameLayout @JvmOverloads constructor(
 ) : FrameLayout(context, attrs) {
 
     var onSwipe: ((Int) -> Unit)? = null
+    /**
+     * 지정하면 자기 자신을 움직이지 않고 끈 거리(px)만 알려준다. 이웃 화면을 나란히 붙여 함께 움직이는 쪽이 쓴다.
+     * 이때 넘기지 않고 놓으면 [onSwipeCancel]을 부른다.
+     */
+    var onDrag: ((Float) -> Unit)? = null
+    var onSwipeCancel: (() -> Unit)? = null
     /** 이 뷰들 위에서 시작한 드래그는 무시한다(썸네일·칩 가로 스크롤). */
     var excludedViews: List<View> = emptyList()
     /** 넘길 곳이 있는지. false면 끌어도 거의 움직이지 않는다. */
@@ -30,6 +36,7 @@ class SwipeFrameLayout @JvmOverloads constructor(
 
     private val touchSlop = ViewConfiguration.get(context).scaledTouchSlop
     private val minFlingVelocity = ViewConfiguration.get(context).scaledMinimumFlingVelocity * 4
+    // 끄는 동안 자신이 움직일 수 있어 화면 기준 좌표(raw)로 잰다.
     private var downX = 0f
     private var downY = 0f
     private var dragging = false
@@ -46,8 +53,8 @@ class SwipeFrameLayout @JvmOverloads constructor(
     private fun track(ev: MotionEvent) {
         when (ev.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
-                downX = ev.x
-                downY = ev.y
+                downX = ev.rawX
+                downY = ev.rawY
                 dragging = false
                 ignore = isOnExcluded(excludedViews, ev.rawX.toInt(), ev.rawY.toInt())
                 tapCandidate = !isOnExcluded(tapExcludedViews, ev.rawX.toInt(), ev.rawY.toInt())
@@ -57,8 +64,8 @@ class SwipeFrameLayout @JvmOverloads constructor(
             MotionEvent.ACTION_MOVE -> {
                 if (dragging) return
                 velocity?.addMovement(ev)
-                val dx = ev.x - downX
-                val dy = ev.y - downY
+                val dx = ev.rawX - downX
+                val dy = ev.rawY - downY
                 if (abs(dx) > touchSlop || abs(dy) > touchSlop) tapCandidate = false
                 if (!ignore && abs(dx) > touchSlop * 2 && abs(dx) > abs(dy) * 2) {
                     dragging = true
@@ -81,13 +88,17 @@ class SwipeFrameLayout @JvmOverloads constructor(
             if (!dragging) return !ignore
         }
         velocity?.addMovement(ev)
-        val dx = ev.x - downX
+        val dx = ev.rawX - downX
         // 손가락 방향의 반대가 넘길 대상이다(왼쪽으로 밀면 다음).
         val dir = if (dx < 0) 1 else -1
         when (ev.actionMasked) {
             MotionEvent.ACTION_MOVE -> {
-                val damping = if (canSwipe(dir)) 0.5f else 0.12f
-                translationX = dx * damping
+                val drag = onDrag
+                if (drag != null) {
+                    drag(dx * if (canSwipe(dir)) 1f else 0.2f)
+                } else {
+                    translationX = dx * if (canSwipe(dir)) 0.5f else 0.12f
+                }
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 velocity?.computeCurrentVelocity(1000)
@@ -96,6 +107,8 @@ class SwipeFrameLayout @JvmOverloads constructor(
                 dragging = false
                 if (ev.actionMasked == MotionEvent.ACTION_UP && passed && canSwipe(dir)) {
                     onSwipe?.invoke(dir)
+                } else if (onDrag != null) {
+                    onSwipeCancel?.invoke()
                 } else {
                     animate().translationX(0f).setDuration(180).start()
                 }
