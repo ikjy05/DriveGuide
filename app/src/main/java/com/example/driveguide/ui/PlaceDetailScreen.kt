@@ -9,6 +9,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.HorizontalScrollView
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -21,10 +22,13 @@ import com.example.driveguide.tour.PlaceType
 import com.example.driveguide.tour.TourApiClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
  * 장소 상세 화면. 사진을 창 전체에 깔고 그 위에 정보를 얹는다.
+ * 좌우 스와이프(또는 오른쪽 위 화살표)로 같은 목록의 이전·다음 장소로 넘긴다.
+ * 정차 중에는 사진이 5초마다 바뀌고, 주행 중에는 멈춘다.
  * Activity 콘텐츠 위에 덮어 띄우고(addContentView), 분할 화면 전환 시
  * [reattach]로 새 창 폭에 맞는 레이아웃(layout / layout-w1200dp)으로 다시 그린다.
  */
@@ -38,11 +42,16 @@ class PlaceDetailScreen(
         fun addWaypoint(place: Place)
         fun setDestination(place: Place)
         fun speak(text: String)
+        /** 현재 위치 기준 거리 문구(예: "2.3km", "출발지까지 4.1km"). */
+        fun distanceLabel(place: Place): String
+        /** 차 진행 방향 기준 상대 각도. 모르면 null. */
+        fun relativeDirection(place: Place): Double?
     }
 
-    private var place: Place? = null
-    private var distanceLabel = ""
-    private var direction: Double? = null
+    private var places: List<Place> = emptyList()
+    private var index = 0
+    private val place: Place? get() = places.getOrNull(index)
+    private var slideshowJob: Job? = null
     private var detail: PlaceDetail? = null
     private var selectedImage = 0
     private var restricted = false
@@ -51,20 +60,45 @@ class PlaceDetailScreen(
 
     val isShowing get() = view != null
 
-    fun show(place: Place, distanceLabel: String) {
-        this.place = place
-        this.distanceLabel = distanceLabel
-        detail = null
-        selectedImage = 0
-        attach()
-        load(place)
+    /** [places] 중 [index]번째 장소를 연다. 스와이프는 이 목록 안에서 움직인다. */
+    fun show(places: List<Place>, index: Int) {
+        this.places = places
+        this.index = index.coerceIn(0, places.lastIndex)
+        openCurrent(slideFrom = 0)
     }
 
     fun close() {
         loadJob?.cancel()
+        slideshowJob?.cancel()
         (view?.parent as? ViewGroup)?.removeView(view)
         view = null
-        place = null
+        places = emptyList()
+    }
+
+    /** +1 다음, -1 이전 장소로 넘긴다. 새 화면은 넘긴 방향에서 밀려 들어온다. */
+    private fun move(step: Int) {
+        val target = index + step
+        if (target !in places.indices) return
+        index = target
+        openCurrent(slideFrom = step)
+    }
+
+    private fun openCurrent(slideFrom: Int) {
+        val place = place ?: return
+        detail = null
+        selectedImage = 0
+        val old = view
+        attach(keepOld = slideFrom != 0)
+        if (slideFrom != 0 && old != null) {
+            val w = (old.width.takeIf { it > 0 } ?: activity.resources.displayMetrics.widthPixels).toFloat()
+            old.animate().translationX(-slideFrom * w).alpha(0.4f).setDuration(260)
+                .withEndAction { (old.parent as? ViewGroup)?.removeView(old) }.start()
+            view?.apply {
+                translationX = slideFrom * w
+                animate().translationX(0f).setDuration(260).start()
+            }
+        }
+        load(place)
     }
 
     /** setContentView로 상세 뷰가 사라진 뒤(분할 화면 전환) 다시 붙인다. */
@@ -72,15 +106,15 @@ class PlaceDetailScreen(
         if (place != null) attach()
     }
 
-    /** 차 기준 방향(상대 각도)이 바뀌면 화살표와 문구를 갱신한다. null이면 숨긴다. */
-    fun setDirection(relative: Double?) {
-        direction = relative
+    /** 위치가 바뀌면 거리·방향 문구를 갱신한다. */
+    fun refreshLocation() {
         val v = view ?: return
         bindSubtitle(v, place ?: return)
     }
 
     private fun bindSubtitle(v: View, place: Place) {
-        val rel = direction
+        val rel = actions.relativeDirection(place)
+        val distanceLabel = actions.distanceLabel(place)
         v.findViewById<ImageView>(R.id.direction).apply {
             visibility = if (rel != null) View.VISIBLE else View.GONE
             rotation = rel?.toFloat() ?: 0f
@@ -93,14 +127,16 @@ class PlaceDetailScreen(
     fun setRestricted(restricted: Boolean) {
         this.restricted = restricted
         view?.let(::applyRestriction)
+        restartSlideshow()
     }
 
-    private fun attach() {
+    private fun attach(keepOld: Boolean = false) {
         val place = place ?: return
-        (view?.parent as? ViewGroup)?.removeView(view)
+        if (!keepOld) (view?.parent as? ViewGroup)?.removeView(view)
         val v = LayoutInflater.from(activity).inflate(R.layout.view_place_detail, null)
         activity.addContentView(v, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
         view = v
+        bindPager(v)
 
         v.findViewById<TextView>(R.id.title).text = place.title
         bindSubtitle(v, place)
@@ -142,6 +178,7 @@ class PlaceDetailScreen(
         showHero(v, d.images.getOrNull(selectedImage) ?: place.imageUrl)
         bindThumbs(v, d.images)
         bindChips(v, d)
+        restartSlideshow()
 
         phoneNumber(d.tel)?.let { number ->
             v.findViewById<View>(R.id.btnCall).apply {
@@ -196,14 +233,71 @@ class PlaceDetailScreen(
                 foreground = if (index == selectedImage) activity.getDrawable(R.drawable.thumb_selected_bg) else null
                 contentDescription = "사진 ${index + 1}"
                 setOnClickListener {
-                    selectedImage = index
-                    showHero(v, url)
-                    bindThumbs(v, images)
+                    selectImage(v, images, index, fade = false)
+                    restartSlideshow() // 직접 고른 사진은 다음 주기까지 보여준다.
                 }
             }
             ImageLoader.load(scope, thumb, url, (160 * density).toInt()) {}
             container.addView(thumb)
         }
+        // 슬라이드쇼로 넘어간 사진의 썸네일이 줄 밖에 있으면 보이도록 스크롤한다.
+        val scroll = v.findViewById<HorizontalScrollView>(R.id.thumbScroll)
+        scroll.post {
+            val selected = container.getChildAt(selectedImage) ?: return@post
+            if (selected.left < scroll.scrollX || selected.right > scroll.scrollX + scroll.width) {
+                scroll.smoothScrollTo(selected.left, 0)
+            }
+        }
+    }
+
+    private fun selectImage(v: View, images: List<String>, index: Int, fade: Boolean) {
+        selectedImage = index
+        val image = v.findViewById<ImageView>(R.id.heroImage)
+        if (fade) {
+            image.animate().alpha(0.2f).setDuration(250).withEndAction {
+                showHero(v, images[index])
+                image.animate().alpha(1f).setDuration(450).start()
+            }.start()
+        } else {
+            showHero(v, images[index])
+        }
+        bindThumbs(v, images)
+    }
+
+    /** 정차 중이고 사진이 여러 장이면 5초마다 다음 사진으로 넘긴다. 주행 중에는 움직이는 화면이 주의를 끌어 멈춘다. */
+    private fun restartSlideshow() {
+        slideshowJob?.cancel()
+        val images = detail?.images ?: return
+        if (restricted || images.size <= 1) return
+        slideshowJob = scope.launch {
+            while (true) {
+                delay(SLIDESHOW_INTERVAL_MS)
+                val v = view ?: return@launch
+                selectImage(v, images, (selectedImage + 1) % images.size, fade = true)
+            }
+        }
+    }
+
+    /** 오른쪽 위 이전·다음 버튼, "3 / 10", 다음 장소 이름과 스와이프 연결. */
+    private fun bindPager(v: View) {
+        val swipe = v as SwipeFrameLayout
+        swipe.onSwipe = ::move
+        swipe.canSwipe = { step -> index + step in places.indices }
+        swipe.excludedViews = listOf(v.findViewById(R.id.thumbScroll), v.findViewById(R.id.chipScroll))
+
+        v.findViewById<View>(R.id.pager).visibility = if (places.size > 1) View.VISIBLE else View.GONE
+        v.findViewById<TextView>(R.id.pagerText).text = "${index + 1} / ${places.size}"
+        v.findViewById<View>(R.id.prevButton).apply {
+            isEnabled = index > 0
+            alpha = if (isEnabled) 1f else 0.3f
+            setOnClickListener { move(-1) }
+        }
+        v.findViewById<View>(R.id.nextButton).apply {
+            isEnabled = index < places.lastIndex
+            alpha = if (isEnabled) 1f else 0.3f
+            setOnClickListener { move(1) }
+        }
+        v.findViewById<TextView>(R.id.nextName).text = places.getOrNull(index + 1)?.let { "다음 · ${it.title}" } ?: ""
     }
 
     /** 이용 시간·휴무·주차·코스 거리 같은 핵심 정보를 한 줄짜리 칩으로 보여준다. */
@@ -273,6 +367,7 @@ class PlaceDetailScreen(
 
     companion object {
         private const val TAG = "PlaceDetailScreen"
+        private const val SLIDESHOW_INTERVAL_MS = 5_000L
         private val PHONE = Regex("""\d{2,4}-\d{3,4}-\d{4}""")
 
         /** "한국농어촌공사 화성·수원지사 031-240-4800" → "031-240-4800" */

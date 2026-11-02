@@ -42,6 +42,7 @@ Pleos 내비에서 현재 위치를 받아, 지나가는 지역의 관광지와 
 - 카드를 누르면 상세 화면(`ui/PlaceDetailScreen.kt`)이 열립니다. 사진이 창 전체를 채우고 그 위에 정보를 얹습니다. 전체 화면은 왼쪽 아래 이름·칩·버튼·썸네일, 오른쪽 아래 반투명 패널에 소개·코스 구성(`layout-w1200dp/view_place_detail.xml`). 분할 화면은 위쪽 약 1/3을 사진만 보여 주고 아래 반투명 시트에 모두 담아 스크롤합니다(`layout/view_place_detail.xml`). 공통 부분은 `detail_header.xml`, `detail_body.xml`입니다.
 - 상세 화면은 사진 위에 그리므로 테마와 무관하게 흰 글씨, 흰 주요 버튼, 반투명 보조 버튼·칩을 씁니다(`PillButton.OnPhoto*` 스타일). 분할 전환 시에도 열린 상태를 유지합니다.
 - 관광지: `detailCommon2`(소개·전화), `detailIntro2`(이용 시간·휴무·주차·문의처), `detailImage2`(사진 갤러리)를 조회합니다. 여행코스: `detailIntro2`(총 거리·소요 시간), `detailInfo2`(포함 장소)를 조회하고, 포함 장소의 경유지 버튼을 누르면 `detailCommon2`로 좌표를 받아 경유지로 넣습니다.
+- 좌우 스와이프(또는 오른쪽 위 ‹ › 버튼)로 같은 목록의 이전·다음 장소로 넘깁니다(`ui/SwipeFrameLayout.kt`). 썸네일·칩 줄 위의 가로 드래그는 제외합니다. 정차 중에는 사진이 5초마다 바뀌고 주행 중에는 멈춥니다.
 - 버튼: 경유지 추가, 목적지로(NaviHelper `requestRoute`), 전화(문의처에서 번호 추출, 다이얼러 열기), 읽어주기(TTS).
 - 주행 중에는 `CarUxRestrictionsManager`로 화면 제한 상태를 받아 소개글을 숨기고 읽어주기만 남깁니다(`ui/DrivingRestriction.kt`).
 

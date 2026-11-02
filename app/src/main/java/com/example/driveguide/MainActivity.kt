@@ -71,7 +71,6 @@ class MainActivity : Activity() {
     )
     private val cards = mutableListOf<CardBinding>()
     private var currentLocation: VehicleLocation? = null
-    private var detailPlace: Place? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -103,6 +102,9 @@ class MainActivity : Activity() {
             override fun speak(text: String) {
                 tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "detail")
             }
+            override fun distanceLabel(place: Place): String =
+                cards.firstOrNull { it.place == place }?.let(::distanceText) ?: formatDistance(place.distanceMeters)
+            override fun relativeDirection(place: Place): Double? = relativeTo(place)
         })
         drivingRestriction = DrivingRestriction(this) { detailScreen.setRestricted(it) }
         drivingRestriction.start()
@@ -297,11 +299,8 @@ class MainActivity : Activity() {
         updateCard(binding)
         card.findViewById<TextView>(R.id.badge).text = if (place.type == PlaceType.COURSE) "코스" else "관광지"
         card.findViewById<Button>(R.id.addWaypoint).setOnClickListener { addWaypoint(place) }
-        card.setOnClickListener {
-            detailPlace = place
-            detailScreen.show(place, distanceText(binding))
-            detailScreen.setDirection(relativeTo(place))
-        }
+        // 상세에서 좌우로 넘길 목록은 지금 화면에 보이는 카드 순서 그대로다(가는 길 탭은 구간을 이어서).
+        card.setOnClickListener { detailScreen.show(cards.map { it.place }, cards.indexOf(binding)) }
 
         val image = card.findViewById<ImageView>(R.id.image)
         ImageLoader.load(scope, image, place.imageUrl, widthPx) {
@@ -323,7 +322,7 @@ class MainActivity : Activity() {
 
     private fun updateCards() {
         cards.forEach(::updateCard)
-        detailPlace?.takeIf { detailScreen.isShowing }?.let { detailScreen.setDirection(relativeTo(it)) }
+        if (detailScreen.isShowing) detailScreen.refreshLocation()
     }
 
     private fun distanceText(card: CardBinding): String {
