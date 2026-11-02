@@ -252,7 +252,7 @@ class NaviBridge(context: Context) {
         private const val TAG = "NaviBridge"
         private const val ROUTE_POLL_EVERY = 3
         /** 경유지 2곳 + 목적지 1곳. NaviHelper의 WaypointIndex가 FIRST·SECOND뿐이다. */
-        private const val COURSE_STOPS_PER_LEG = 3
+        const val COURSE_STOPS_PER_LEG = 3
         private const val COURSE_MATCH_METERS = 300.0
 
         // 내비가 경유지 좌표를 (0, 0)으로 돌려주는 경우가 있어, 앱에서 추가한 경유지의 좌표를 이름으로 기억해 둔다.

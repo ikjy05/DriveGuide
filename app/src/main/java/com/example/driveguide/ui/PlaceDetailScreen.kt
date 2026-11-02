@@ -20,6 +20,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import com.example.driveguide.R
+import com.example.driveguide.navi.NaviBridge
 import com.example.driveguide.tour.CourseStop
 import com.example.driveguide.tour.Place
 import com.example.driveguide.tour.PlaceDetail
@@ -349,9 +350,19 @@ class PlaceDetailScreen(
                 d.courseDistance?.let { "총 $it" },
                 d.courseTakeTime?.let { "소요 $it" },
             ).joinToString(" · ")
+            val legs = d.courseStops.indices.chunked(NaviBridge.COURSE_STOPS_PER_LEG)
+            v.findViewById<TextView>(R.id.courseLegNote).apply {
+                visibility = if (legs.size > 1) View.VISIBLE else View.GONE
+                val ranges = legs.joinToString(" → ") { leg -> if (leg.size == 1) "${leg[0] + 1}번" else "${leg.first() + 1}~${leg.last() + 1}번" }
+                text = "내비는 한 번에 3곳까지 안내해요. $ranges 순서로 나눠, 구간 끝에 도착하면 이어서 안내합니다."
+            }
             val container = v.findViewById<LinearLayout>(R.id.stopsContainer)
             container.removeAllViews()
-            d.courseStops.forEachIndexed { i, stop -> container.addView(stopRow(container, i, stop)) }
+            d.courseStops.forEachIndexed { i, stop ->
+                // 다음 구간이 시작되는 자리에 구분 표시를 넣는다.
+                if (i > 0 && i % NaviBridge.COURSE_STOPS_PER_LEG == 0) container.addView(legDivider(i / NaviBridge.COURSE_STOPS_PER_LEG + 1))
+                container.addView(stopRow(container, i, stop))
+            }
         }
         applyRestriction(v, p)
     }
@@ -465,6 +476,16 @@ class PlaceDetailScreen(
                 layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
                     .apply { marginEnd = (10 * density).toInt() }
             })
+        }
+    }
+
+    private fun legDivider(leg: Int): View {
+        val density = activity.resources.displayMetrics.density
+        return TextView(activity).apply {
+            text = "${leg}구간 · 앞 구간 도착 후 이어서 안내"
+            textSize = 22f
+            setTextColor(0xB3FFFFFF.toInt())
+            setPadding((8 * density).toInt(), (6 * density).toInt(), 0, (10 * density).toInt())
         }
     }
 

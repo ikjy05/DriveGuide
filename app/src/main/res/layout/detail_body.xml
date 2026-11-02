@@ -85,6 +85,23 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
+        <!-- 내비 경유지가 2곳까지라 4곳 이상인 코스는 나눠 안내한다는 설명 -->
+        <TextView
+            android:id="@+id/courseLegNote"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:background="@drawable/photo_row_bg"
+            android:drawableStart="@drawable/ic_route"
+            android:drawablePadding="14dp"
+            android:drawableTint="#E6FFFFFF"
+            android:gravity="center_vertical"
+            android:lineSpacingMultiplier="1.15"
+            android:padding="16dp"
+            android:textColor="#E6FFFFFF"
+            android:textSize="24sp"
+            android:visibility="gone" />
+
         <LinearLayout
             android:id="@+id/stopsContainer"
             android:layout_width="match_parent"
