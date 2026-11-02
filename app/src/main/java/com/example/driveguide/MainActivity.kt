@@ -17,6 +17,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import com.example.driveguide.navi.NaviBridge
+import com.example.driveguide.navi.VehicleLocation
 import com.example.driveguide.notify.PlaceNotifier
 import com.example.driveguide.route.UpcomingEngine
 import com.example.driveguide.route.UpcomingSection
@@ -24,6 +25,8 @@ import com.example.driveguide.tour.CourseRepository
 import com.example.driveguide.tour.Place
 import com.example.driveguide.tour.PlaceType
 import com.example.driveguide.tour.TourApiClient
+import com.example.driveguide.tour.distanceMeters
+import com.example.driveguide.ui.Direction
 import com.example.driveguide.ui.DrivingRestriction
 import com.example.driveguide.ui.ImageLoader
 import com.example.driveguide.ui.PlaceDetailScreen
@@ -55,6 +58,20 @@ class MainActivity : Activity() {
     private var latest: Recommendation? = null
     private var upcoming: List<UpcomingSection>? = null
     private var selectedTab = Tab.NEARBY
+
+    /** 화면에 그려진 카드. 위치가 바뀔 때 카드를 다시 만들지 않고 거리·방향만 갱신한다. */
+    private class CardBinding(
+        val place: Place,
+        val direction: ImageView,
+        val subtitle: TextView,
+        /** 거리 문구 앞말(예: "출발지까지", "경로에서"). */
+        val prefix: String,
+        /** true면 현재 위치에서 다시 잰 거리, false면 추천 당시 거리(경로 기준)를 쓴다. */
+        val liveDistance: Boolean,
+    )
+    private val cards = mutableListOf<CardBinding>()
+    private var currentLocation: VehicleLocation? = null
+    private var detailPlace: Place? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -93,6 +110,8 @@ class MainActivity : Activity() {
         scope.launch {
             navi.location.filterNotNull().collect { location ->
                 statusText.text = location.address ?: "%.5f, %.5f".format(location.latitude, location.longitude)
+                currentLocation = location
+                updateCards()
                 try {
                     engine.onLocation(location)?.let(::onRecommendation)
                 } catch (e: Exception) {
@@ -166,14 +185,21 @@ class MainActivity : Activity() {
 
         if (rec.regionChanged && rec.region != null) {
             val name = rec.region.substringAfterLast(' ')
-            val message = buildString {
+            val message = StringBuilder().apply {
                 append("${name}에 진입했습니다.")
                 if (rec.attractions.isNotEmpty()) append(" 주변 추천 관광지 ${rec.attractions.size}곳이 있습니다.")
                 if (rec.courses.isNotEmpty()) append(" ${rec.courses.first().title} 코스도 가까워요.")
             }
-            tts?.speak(message, TextToSpeech.QUEUE_FLUSH, null, "region")
-            rec.attractions.firstOrNull()?.let { top ->
-                notifier.notify("${name} 진입", top, "${formatDistance(top.distanceMeters)} · 추천 관광지 ${rec.attractions.size}곳", force = true)
+            // 방향을 알면 지나친 쪽이 아닌 장소를 먼저 안내한다.
+            val top = sortAhead(rec.attractions).firstOrNull()
+            val topDirection = top?.let { relativeTo(it) }
+            if (top != null && topDirection != null) {
+                message.append(" ${Direction.label(topDirection)} ${spokenDistance(top.distanceMeters)}에 ${top.title}이 있어요.")
+            }
+            tts?.speak(message.toString(), TextToSpeech.QUEUE_FLUSH, null, "region")
+            top?.let {
+                val where = listOfNotNull(formatDistance(it.distanceMeters), topDirection?.let(Direction::label)).joinToString(" ")
+                notifier.notify("${name} 진입", it, "$where · 추천 관광지 ${rec.attractions.size}곳", force = true)
             }
         }
     }
@@ -183,7 +209,8 @@ class MainActivity : Activity() {
         val section = sections.firstOrNull() ?: return
         val place = section.places.firstOrNull() ?: return
         val where = "약 ${formatDistance(section.aheadMeters)} 앞" + (section.region?.let { " · $it" } ?: "")
-        notifier.notify(where, place, "경로에서 ${formatDistance(place.distanceMeters)}")
+        val side = relativeTo(place)?.let { " · 차 기준 ${Direction.label(it)}" } ?: ""
+        notifier.notify(where, place, "경로에서 ${formatDistance(place.distanceMeters)}$side")
     }
 
     private fun selectTab(tab: Tab) {
@@ -198,6 +225,7 @@ class MainActivity : Activity() {
 
     private fun render() {
         listContainer.removeAllViews()
+        cards.clear()
         when (selectedTab) {
             Tab.NEARBY -> renderPlaces(latest?.attractions ?: return, "주변에 표시할 관광지 정보가 없습니다.")
             Tab.COURSES -> renderPlaces(latest?.courses ?: return, "주변에 표시할 여행코스 정보가 없습니다.")
@@ -210,9 +238,9 @@ class MainActivity : Activity() {
             addMessage(emptyMessage)
             return
         }
-        addCardGrid(places) { place ->
-            val distance = formatDistance(place.distanceMeters)
-            if (place.type == PlaceType.COURSE) "출발지까지 $distance" else distance
+        // 진행 방향을 알면 이미 지나친 쪽 장소를 뒤로 보낸다(그 안에서는 거리순 유지).
+        addCardGrid(sortAhead(places), liveDistance = true) { place ->
+            if (place.type == PlaceType.COURSE) "출발지까지" else ""
         }
     }
 
@@ -226,16 +254,15 @@ class MainActivity : Activity() {
                 addSectionHeader(
                     "약 ${formatDistance(section.aheadMeters)} 앞" + (section.region?.let { " · $it" } ?: "")
                 )
-                addCardGrid(section.places) { place ->
-                    val kind = if (place.type == PlaceType.COURSE) "코스 출발지" else "경로에서"
-                    "$kind ${formatDistance(place.distanceMeters)}"
+                addCardGrid(section.places, liveDistance = false) { place ->
+                    if (place.type == PlaceType.COURSE) "코스 출발지" else "경로에서"
                 }
             }
         }
     }
 
     /** 장소들을 카드 격자로 추가한다. 열 수는 창 폭에 따라 2(분할) 또는 3(전체). */
-    private fun addCardGrid(places: List<Place>, distanceLabel: (Place) -> String) {
+    private fun addCardGrid(places: List<Place>, liveDistance: Boolean, prefix: (Place) -> String) {
         val columns = resources.getInteger(R.integer.card_columns)
         val gap = resources.getDimensionPixelSize(R.dimen.card_gap)
         // 이미지는 카드 폭 정도로만 디코딩한다.
@@ -249,7 +276,7 @@ class MainActivity : Activity() {
             for (i in 0 until columns) {
                 val place = rowPlaces.getOrNull(i)
                 val card = if (place != null) {
-                    createCard(row, place, distanceLabel(place), cardWidth)
+                    createCard(row, place, prefix(place), liveDistance, cardWidth)
                 } else {
                     // 마지막 줄이 덜 차도 카드 폭이 같도록 빈 칸을 채운다.
                     View(this).apply { layoutParams = LinearLayout.LayoutParams(0, 0, 1f) }
@@ -261,16 +288,20 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun createCard(parent: LinearLayout, place: Place, distance: String, widthPx: Int): View {
+    private fun createCard(parent: LinearLayout, place: Place, prefix: String, liveDistance: Boolean, widthPx: Int): View {
         val card = LayoutInflater.from(this).inflate(R.layout.item_place_card, parent, false)
         card.clipToOutline = true // 이미지 모서리를 카드 라운드에 맞춘다.
         card.findViewById<TextView>(R.id.title).text = place.title
-        // 사진 위에 겹치므로 거리와 주소를 한 줄로 묶는다.
-        card.findViewById<TextView>(R.id.subtitle).text =
-            if (place.address.isBlank()) distance else "$distance · ${place.address}"
+        val binding = CardBinding(place, card.findViewById(R.id.direction), card.findViewById(R.id.subtitle), prefix, liveDistance)
+        cards += binding
+        updateCard(binding)
         card.findViewById<TextView>(R.id.badge).text = if (place.type == PlaceType.COURSE) "코스" else "관광지"
         card.findViewById<Button>(R.id.addWaypoint).setOnClickListener { addWaypoint(place) }
-        card.setOnClickListener { detailScreen.show(place, distance) }
+        card.setOnClickListener {
+            detailPlace = place
+            detailScreen.show(place, distanceText(binding))
+            detailScreen.setDirection(relativeTo(place))
+        }
 
         val image = card.findViewById<ImageView>(R.id.image)
         ImageLoader.load(scope, image, place.imageUrl, widthPx) {
@@ -280,6 +311,44 @@ class MainActivity : Activity() {
         }
         return card
     }
+
+    /** 카드의 거리 문구. 사진 위에 겹치므로 거리·방향·주소를 한 줄로 묶는다. */
+    private fun updateCard(card: CardBinding) {
+        val rel = relativeTo(card.place)
+        card.direction.visibility = if (rel != null) View.VISIBLE else View.GONE
+        card.direction.rotation = rel?.toFloat() ?: 0f
+        card.subtitle.text = listOfNotNull(distanceText(card), rel?.let(Direction::label), card.place.address.ifBlank { null })
+            .joinToString(" · ")
+    }
+
+    private fun updateCards() {
+        cards.forEach(::updateCard)
+        detailPlace?.takeIf { detailScreen.isShowing }?.let { detailScreen.setDirection(relativeTo(it)) }
+    }
+
+    private fun distanceText(card: CardBinding): String {
+        val loc = currentLocation
+        val meters = if (card.liveDistance && loc != null) {
+            distanceMeters(loc.latitude, loc.longitude, card.place.latitude, card.place.longitude)
+        } else {
+            card.place.distanceMeters
+        }
+        return listOf(card.prefix, formatDistance(meters)).filter { it.isNotBlank() }.joinToString(" ")
+    }
+
+    /** 차 진행 방향 기준 상대 각도. 위치나 방향을 모르면 null. */
+    private fun relativeTo(place: Place): Double? {
+        val loc = currentLocation ?: return null
+        val heading = loc.heading ?: return null
+        return Direction.relative(heading, loc.latitude, loc.longitude, place.latitude, place.longitude)
+    }
+
+    private fun sortAhead(places: List<Place>): List<Place> =
+        places.sortedBy { place -> relativeTo(place)?.let(Direction::isBehind) ?: false }
+
+    /** TTS용 거리("2.3킬로미터", "800미터"). */
+    private fun spokenDistance(meters: Double): String =
+        if (meters >= 1000) "%.1f킬로미터".format(meters / 1000) else "${meters.toInt()}미터"
 
     private fun addSectionHeader(text: String) {
         listContainer.addView(TextView(this).apply {

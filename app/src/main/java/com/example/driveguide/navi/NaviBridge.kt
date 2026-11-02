@@ -18,6 +18,8 @@ import android.util.Log
 import com.example.driveguide.route.RouteState
 import com.example.driveguide.route.RouteTarget
 import com.example.driveguide.tour.Place
+import com.example.driveguide.tour.distanceMeters
+import com.example.driveguide.ui.bearingDegrees
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -33,6 +35,8 @@ data class VehicleLocation(
     val latitude: Double,
     val longitude: Double,
     val address: String?,
+    /** 진행 방향(북쪽 0°, 시계방향). 정차 등으로 알 수 없으면 null. */
+    val heading: Double? = null,
 )
 
 /**
@@ -55,17 +59,20 @@ class NaviBridge(context: Context) {
     private val _route = MutableStateFlow<RouteState?>(null)
     val route: StateFlow<RouteState?> = _route.asStateFlow()
 
+    // 진행 방향 보정용: 마지막으로 의미 있게 이동한 위치와 그때의 방향.
+    private var lastMoveLat: Double? = null
+    private var lastMoveLng: Double? = null
+    private var lastHeading: Double? = null
+
     // 목적지와 경유지는 서로 다른 콜백으로 오므로 따로 보관했다가 합친다.
     @Volatile private var destination: RouteTarget? = null
     @Volatile private var waypoints: List<RouteTarget> = emptyList()
 
     private val listener = object : NaviHelperEventListener {
         override fun onCurrentLocationInfo(currentLocationInfo: CurrentLocationInfo) {
-            _location.value = VehicleLocation(
-                latitude = currentLocationInfo.latitude,
-                longitude = currentLocationInfo.longitude,
-                address = currentLocationInfo.address,
-            )
+            val lat = currentLocationInfo.latitude
+            val lng = currentLocationInfo.longitude
+            _location.value = VehicleLocation(lat, lng, currentLocationInfo.address, headingFor(lat, lng, currentLocationInfo.heading))
         }
 
         override fun onDestinationInfo(destinationInfo: DestinationInfo) {
@@ -130,6 +137,23 @@ class NaviBridge(context: Context) {
         pollJob?.cancel()
         naviHelper.removeListener(listener)
         naviHelper.release()
+    }
+
+    /**
+     * 내비 heading은 정차 중 0으로 오기도 한다. 0이 아니면 그대로 쓰고,
+     * 0이면 이전 위치에서 30m 이상 움직였을 때 이동 방향을 계산한다. 정차 중에는 마지막 방향을 유지한다.
+     */
+    private fun headingFor(lat: Double, lng: Double, reported: Double): Double? {
+        val prevLat = lastMoveLat
+        val prevLng = lastMoveLng
+        val moved = prevLat != null && prevLng != null && distanceMeters(prevLat, prevLng, lat, lng) >= 30
+        if (prevLat == null || moved) {
+            if (moved && reported == 0.0) lastHeading = bearingDegrees(prevLat!!, prevLng!!, lat, lng)
+            lastMoveLat = lat
+            lastMoveLng = lng
+        }
+        if (reported != 0.0) lastHeading = reported
+        return lastHeading
     }
 
     private fun requestRoute() {

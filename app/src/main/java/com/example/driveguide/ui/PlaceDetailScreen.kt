@@ -42,6 +42,7 @@ class PlaceDetailScreen(
 
     private var place: Place? = null
     private var distanceLabel = ""
+    private var direction: Double? = null
     private var detail: PlaceDetail? = null
     private var selectedImage = 0
     private var restricted = false
@@ -71,6 +72,23 @@ class PlaceDetailScreen(
         if (place != null) attach()
     }
 
+    /** 차 기준 방향(상대 각도)이 바뀌면 화살표와 문구를 갱신한다. null이면 숨긴다. */
+    fun setDirection(relative: Double?) {
+        direction = relative
+        val v = view ?: return
+        bindSubtitle(v, place ?: return)
+    }
+
+    private fun bindSubtitle(v: View, place: Place) {
+        val rel = direction
+        v.findViewById<ImageView>(R.id.direction).apply {
+            visibility = if (rel != null) View.VISIBLE else View.GONE
+            rotation = rel?.toFloat() ?: 0f
+        }
+        v.findViewById<TextView>(R.id.subtitle).text =
+            listOfNotNull(distanceLabel, rel?.let(Direction::label), place.address.ifBlank { null }).joinToString(" · ")
+    }
+
     /** 주행 중이면 긴 소개글을 숨기고 읽어주기만 남긴다. */
     fun setRestricted(restricted: Boolean) {
         this.restricted = restricted
@@ -85,8 +103,7 @@ class PlaceDetailScreen(
         view = v
 
         v.findViewById<TextView>(R.id.title).text = place.title
-        v.findViewById<TextView>(R.id.subtitle).text =
-            if (place.address.isBlank()) distanceLabel else "$distanceLabel · ${place.address}"
+        bindSubtitle(v, place)
         v.findViewById<TextView>(R.id.badge).text = place.type.label
         v.findViewById<View>(R.id.backButton).setOnClickListener { close() }
         v.findViewById<Button>(R.id.btnWaypoint).setOnClickListener { actions.addWaypoint(place) }
