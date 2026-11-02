@@ -14,12 +14,29 @@
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
-        <ImageView
+        <!-- 런처 아이콘의 두 레이어를 모양 마스크 없이 네모로 보여준다.
+             적응형 아이콘은 108dp 중 가운데 72dp가 보이는 영역이라 1.5배 키워 가장자리를 잘라낸다. -->
+        <FrameLayout
             android:layout_width="76dp"
             android:layout_height="76dp"
-            android:layout_marginEnd="18dp"
-            android:importantForAccessibility="no"
-            android:src="@mipmap/ic_launcher" />
+            android:layout_marginEnd="18dp">
+
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:importantForAccessibility="no"
+                android:scaleX="1.5"
+                android:scaleY="1.5"
+                android:src="@drawable/ic_launcher_background" />
+
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:importantForAccessibility="no"
+                android:scaleX="1.5"
+                android:scaleY="1.5"
+                android:src="@drawable/ic_launcher_foreground" />
+        </FrameLayout>
 
         <LinearLayout
             android:layout_width="0dp"
