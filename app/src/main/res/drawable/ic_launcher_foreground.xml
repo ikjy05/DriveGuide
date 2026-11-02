@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 앱 아이콘 전경: 굽은 길 끝의 도착 핀. 적응형 아이콘 안전 영역(가운데 66dp) 안에 그린다. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- 길 -->
+    <path
+        android:pathData="M34,86 C34,68 74,72 74,56 C74,46 58,46 58,40"
+        android:strokeWidth="10"
+        android:strokeColor="#FFFFFF"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000" />
+    <!-- 가운데 차선 -->
+    <path
+        android:pathData="M34,86 C34,68 74,72 74,56 C74,46 58,46 58,40"
+        android:strokeWidth="1.8"
+        android:strokeColor="#1F5FD6"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000" />
+    <!-- 도착 핀 -->
+    <path
+        android:pathData="M58,18C50.8,18 45,23.8 45,31c0,9.6 13,22 13,22s13,-12.4 13,-22c0,-7.2 -5.8,-13 -13,-13z"
+        android:fillColor="#FFFFFF" />
+    <path
+        android:pathData="M58,31m-5,0a5,5 0,1 1,10 0a5,5 0,1 1,-10 0"
+        android:fillColor="#FFB020" />
+</vector>
