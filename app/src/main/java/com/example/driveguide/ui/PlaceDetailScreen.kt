@@ -64,6 +64,7 @@ class PlaceDetailScreen(
     private var places: List<Place> = emptyList()
     private var index = 0
     private val place: Place? get() = places.getOrNull(index)
+    private var showBadge = false
 
     /** 상세 화면들을 담는 바탕. 검은 배경이라 넘기는 동안 뒤의 목록이 비치지 않는다. */
     private var host: FrameLayout? = null
@@ -84,6 +85,8 @@ class PlaceDetailScreen(
     /** [places] 중 [index]번째 장소를 연다. 스와이프는 이 목록 안에서 움직인다. */
     fun show(places: List<Place>, index: Int) {
         this.places = places
+        // 관광지와 코스가 섞인 목록(가는 길)에서만 종류 배지를 보여준다.
+        showBadge = places.map { it.type }.distinct().size > 1
         this.index = index.coerceIn(0, places.lastIndex)
         selectedImage = 0
         attach()
@@ -295,7 +298,10 @@ class PlaceDetailScreen(
     private fun bindBasic(v: View, p: Place) {
         v.findViewById<TextView>(R.id.title).text = p.title
         bindSubtitle(v, p)
-        v.findViewById<TextView>(R.id.badge).text = p.type.label
+        v.findViewById<TextView>(R.id.badge).apply {
+            text = p.type.label
+            visibility = if (showBadge) View.VISIBLE else View.GONE
+        }
         v.findViewById<View>(R.id.backButton).setOnClickListener { close() }
         val isCourse = p.type == PlaceType.COURSE
         v.findViewById<Button>(R.id.btnWaypoint).apply {

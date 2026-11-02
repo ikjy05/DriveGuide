@@ -317,7 +317,11 @@ class MainActivity : Activity() {
         val binding = CardBinding(place, card.findViewById(R.id.direction), card.findViewById(R.id.subtitle), prefix, liveDistance)
         cards += binding
         updateCard(binding)
-        card.findViewById<TextView>(R.id.badge).text = if (place.type == PlaceType.COURSE) "코스" else "관광지"
+        // 종류가 섞이는 가는 길 탭에서만 배지로 구분한다(다른 탭은 탭 이름이 종류다).
+        card.findViewById<TextView>(R.id.badge).apply {
+            text = if (place.type == PlaceType.COURSE) "코스" else "관광지"
+            visibility = if (selectedTab == Tab.UPCOMING) View.VISIBLE else View.GONE
+        }
         card.findViewById<Button>(R.id.addWaypoint).setOnClickListener { addWaypoint(place) }
         // 상세에서 좌우로 넘길 목록은 지금 화면에 보이는 카드 순서 그대로다(가는 길 탭은 구간을 이어서).
         card.setOnClickListener { detailScreen.show(cards.map { it.place }, cards.indexOf(binding)) }
