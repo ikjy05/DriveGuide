@@ -41,7 +41,8 @@ class DirectionTest {
     fun behindDetection() {
         assertTrue(Direction.isBehind(170.0))
         assertTrue(Direction.isBehind(-150.0))
-        assertFalse(Direction.isBehind(100.0))
+        assertTrue(Direction.isBehind(-125.0)) // 왼쪽 뒤
+        assertFalse(Direction.isBehind(100.0)) // 오른쪽
         assertEquals("뒤", Direction.label(-179.0))
         assertEquals("왼쪽 뒤", Direction.label(-135.0))
     }

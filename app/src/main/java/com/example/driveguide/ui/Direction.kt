@@ -38,6 +38,6 @@ object Direction {
         else -> "왼쪽 앞"
     }
 
-    /** 이미 지나친 쪽(뒤쪽 90° 범위). */
-    fun isBehind(relative: Double): Boolean = abs(relative) > 135
+    /** 이미 지나친 쪽. 문구가 "뒤", "왼쪽 뒤", "오른쪽 뒤"인 범위(뒤쪽 135°)와 같다. */
+    fun isBehind(relative: Double): Boolean = abs(relative) > 112.5
 }
