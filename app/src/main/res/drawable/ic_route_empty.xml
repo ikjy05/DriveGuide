@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 가는 길 빈 상태 그림: 출발점에서 굽은 길을 따라 도착 핀까지. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="120dp"
+    android:height="120dp"
+    android:viewportWidth="96"
+    android:viewportHeight="96">
+    <!-- 길 -->
+    <path
+        android:pathData="M22,80 C22,58 74,64 74,44 C74,30 52,30 52,20"
+        android:strokeWidth="9"
+        android:strokeColor="@color/empty_road"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000" />
+    <!-- 가운데 차선 -->
+    <path
+        android:pathData="M22,80 C22,58 74,64 74,44 C74,30 52,30 52,20"
+        android:strokeWidth="1.6"
+        android:strokeColor="@color/empty_lane"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000" />
+    <!-- 출발점 -->
+    <path
+        android:pathData="M22,80m-7,0a7,7 0,1 1,14 0a7,7 0,1 1,-14 0"
+        android:fillColor="@color/accent" />
+    <path
+        android:pathData="M22,80m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0"
+        android:fillColor="#FFFFFF" />
+    <!-- 도착 핀 -->
+    <path
+        android:pathData="M52,2C45.9,2 41,6.9 41,13c0,8.2 11,19 11,19s11,-10.8 11,-19c0,-6.1 -4.9,-11 -11,-11z"
+        android:fillColor="@color/accent" />
+    <path
+        android:pathData="M52,13m-4,0a4,4 0,1 1,8 0a4,4 0,1 1,-8 0"
+        android:fillColor="#FFFFFF" />
+</vector>

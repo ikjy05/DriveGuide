@@ -229,15 +229,22 @@ class MainActivity : Activity() {
         listContainer.removeAllViews()
         cards.clear()
         when (selectedTab) {
-            Tab.NEARBY -> renderPlaces(latest?.attractions ?: return, "주변에 표시할 관광지 정보가 없습니다.")
-            Tab.COURSES -> renderPlaces(latest?.courses ?: return, "주변에 표시할 여행코스 정보가 없습니다.")
+            Tab.NEARBY -> renderPlaces(latest?.attractions ?: return) {
+                addEmptyState(R.drawable.ic_place_large, "주변에 추천할 관광지가 없어요", "이동하면 새 지역의 관광지를 다시 찾아볼게요.")
+            }
+            Tab.COURSES -> renderPlaces(latest?.courses ?: return) {
+                addEmptyState(
+                    R.drawable.ic_route_empty, "가까운 여행코스가 없어요", "반경 60km 안에서 출발하는 코스를 찾지 못했어요.",
+                    "주변 관광지 보기",
+                ) { selectTab(Tab.NEARBY) }
+            }
             Tab.UPCOMING -> renderUpcoming()
         }
     }
 
-    private fun renderPlaces(places: List<Place>, emptyMessage: String) {
+    private fun renderPlaces(places: List<Place>, onEmpty: () -> Unit) {
         if (places.isEmpty()) {
-            addMessage(emptyMessage)
+            onEmpty()
             return
         }
         // 진행 방향을 알면 이미 지나친 쪽 장소를 뒤로 보낸다(그 안에서는 거리순 유지).
@@ -249,9 +256,17 @@ class MainActivity : Activity() {
     private fun renderUpcoming() {
         val sections = upcoming
         when {
-            navi.route.value == null -> addMessage("내비에서 목적지를 설정하면 가는 길의 관광지를 미리 알려드려요.")
-            sections == null -> addMessage("경로를 분석하는 중…")
-            sections.isEmpty() -> addMessage("경로 앞쪽에 추천할 장소가 없습니다.")
+            navi.route.value == null -> addEmptyState(
+                R.drawable.ic_route_empty, "목적지를 설정해 주세요",
+                "내비에서 목적지를 정하면 가는 길에 들를 만한\n관광지와 코스를 미리 알려드려요.",
+                "주변 관광지 보기",
+            ) { selectTab(Tab.NEARBY) }
+            sections == null -> addEmptyState(null, "가는 길을 살펴보는 중", "경로 앞 60km까지 들를 만한 곳을 찾고 있어요.")
+            sections.isEmpty() -> addEmptyState(
+                R.drawable.ic_route_empty, "가는 길엔 추천할 곳이 없어요",
+                "남은 경로 주변에서 들를 만한 곳을 찾지 못했어요.\n달리면서 계속 찾아볼게요.",
+                "주변 관광지 보기",
+            ) { selectTab(Tab.NEARBY) }
             else -> sections.forEach { section ->
                 addSectionHeader(
                     "약 ${formatDistance(section.aheadMeters)} 앞" + (section.region?.let { " · $it" } ?: "")
@@ -358,12 +373,32 @@ class MainActivity : Activity() {
         })
     }
 
-    private fun addMessage(text: String) {
-        listContainer.addView(TextView(this).apply {
-            this.text = text
-            textSize = 28f
-            setTextColor(getColor(R.color.text_secondary))
-        })
+    /** 목록 대신 가운데에 그림·제목·설명(·버튼)을 보여준다. [icon]이 null이면 불러오는 중 표시. */
+    private fun addEmptyState(
+        icon: Int?,
+        title: String,
+        body: String,
+        actionText: String? = null,
+        action: (() -> Unit)? = null,
+    ) {
+        val view = LayoutInflater.from(this).inflate(R.layout.view_empty_state, listContainer, false)
+        val iconView = view.findViewById<ImageView>(R.id.emptyIcon)
+        if (icon != null) iconView.setImageResource(icon) else iconView.visibility = View.GONE
+        view.findViewById<View>(R.id.emptyProgress).visibility = if (icon == null) View.VISIBLE else View.GONE
+        view.findViewById<TextView>(R.id.emptyTitle).text = title
+        view.findViewById<TextView>(R.id.emptyBody).text = body
+        if (actionText != null && action != null) {
+            view.findViewById<Button>(R.id.emptyAction).apply {
+                text = actionText
+                visibility = View.VISIBLE
+                setOnClickListener { action() }
+            }
+        }
+        // 스크롤 영역 높이만큼 늘려 세로 가운데에 둔다.
+        val scroll = listContainer.parent as View
+        view.minimumHeight = scroll.height
+        if (scroll.height == 0) scroll.post { view.minimumHeight = scroll.height }
+        listContainer.addView(view)
     }
 
     private fun addWaypoint(place: Place) {

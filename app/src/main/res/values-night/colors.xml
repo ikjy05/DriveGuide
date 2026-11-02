@@ -21,4 +21,8 @@
     <color name="btn_secondary">#000000</color>
     <color name="btn_secondary_outline">#3A4656</color>
     <color name="on_btn_secondary">#FFFFFF</color>
+
+    <!-- 빈 상태 그림 -->
+    <color name="empty_road">#3A4656</color>
+    <color name="empty_lane">#6B7684</color>
 </resources>
