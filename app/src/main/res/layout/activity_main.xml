@@ -96,6 +96,20 @@
             android:layout_weight="1"
             android:text="가는 길"
             android:textSize="26sp" />
+
+        <Button
+            android:id="@+id/tabSaved"
+            style="?android:attr/borderlessButtonStyle"
+            android:background="@drawable/tab_bg"
+            android:stateListAnimator="@null"
+            android:textAllCaps="false"
+            android:textColor="@color/tab_text"
+            android:textStyle="bold"
+            android:layout_width="0dp"
+            android:layout_height="80dp"
+            android:layout_weight="1"
+            android:text="저장"
+            android:textSize="26sp" />
     </LinearLayout>
 
     <ScrollView

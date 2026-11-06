@@ -16,6 +16,7 @@ import android.view.animation.DecelerateInterpolator
 import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.HorizontalScrollView
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -56,10 +57,13 @@ class PlaceDetailScreen(
         /** 코스 장소들을 순서대로 내비 경로로 보낸다. */
         fun startCourse(course: Place, stops: List<Place>)
         fun speak(text: String)
-        /** 현재 위치 기준 거리 문구(예: "2.3km", "출발지까지 4.1km"). */
-        fun distanceLabel(place: Place): String
+        /** 현재 위치 기준 거리 문구(예: "2.3km", "출발지까지 4.1km"). 모르면 null. */
+        fun distanceLabel(place: Place): String?
         /** 차 진행 방향 기준 상대 각도. 모르면 null. */
         fun relativeDirection(place: Place): Double?
+        fun isSaved(place: Place): Boolean
+        /** 저장 여부를 뒤집는다. 별 표시는 [refreshSaved]로 돌아와 바뀐다. */
+        fun toggleSaved(place: Place)
     }
 
     private var places: List<Place> = emptyList()
@@ -120,6 +124,11 @@ class PlaceDetailScreen(
     /** 위치가 바뀌면 거리·방향 문구를 갱신한다. */
     fun refreshLocation() {
         forEachSlot { v, p, _ -> bindSubtitle(v, p) }
+    }
+
+    /** 저장 목록이 바뀌면(이 화면의 별 또는 알림의 나중에 보기) 별 표시를 맞춘다. */
+    fun refreshSaved() {
+        forEachSlot { v, p, _ -> bindSave(v, p) }
     }
 
     /** 주행 중이면 긴 소개글을 숨기고 읽어주기만 남긴다. */
@@ -199,7 +208,7 @@ class PlaceDetailScreen(
         swipe.onTap = ::openPhotoViewer
         swipe.tapExcludedViews = listOfNotNull<View>(
             swipe.findViewById(R.id.sheet), swipe.findViewById(R.id.header), swipe.findViewById(R.id.bodyPanel),
-            swipe.findViewById(R.id.pager), swipe.findViewById(R.id.backButton),
+            swipe.findViewById(R.id.pager), swipe.findViewById(R.id.backButton), swipe.findViewById(R.id.saveButton),
         )
 
         swipe.findViewById<View>(R.id.pager).visibility = if (places.size > 1) View.VISIBLE else View.GONE
@@ -305,6 +314,7 @@ class PlaceDetailScreen(
             visibility = if (showBadge) View.VISIBLE else View.GONE
         }
         v.findViewById<View>(R.id.backButton).setOnClickListener { close() }
+        bindSave(v, p)
         val isCourse = p.type == PlaceType.COURSE
         v.findViewById<Button>(R.id.btnWaypoint).apply {
             // 코스는 포함 장소 전체를 내비 경로로 보내는 것이 주요 동작이다.
@@ -319,6 +329,15 @@ class PlaceDetailScreen(
         v.findViewById<View>(R.id.btnCall).visibility = View.GONE
         // 이웃 화면은 끄는 동안 보이기만 하므로 화살표 묶음은 숨긴다(가운데 화면에서 다시 보인다).
         v.findViewById<View>(R.id.pager).visibility = View.GONE
+    }
+
+    private fun bindSave(v: View, p: Place) {
+        val saved = actions.isSaved(p)
+        v.findViewById<ImageButton>(R.id.saveButton).apply {
+            setImageResource(if (saved) R.drawable.ic_star_filled else R.drawable.ic_star)
+            contentDescription = if (saved) "저장 취소" else "저장"
+            setOnClickListener { actions.toggleSaved(p) }
+        }
     }
 
     private fun bindSubtitle(v: View, p: Place) {

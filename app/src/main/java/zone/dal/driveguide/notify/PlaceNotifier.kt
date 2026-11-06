@@ -11,11 +11,12 @@ import android.content.pm.PackageManager
 import android.graphics.drawable.Icon
 import zone.dal.driveguide.MainActivity
 import zone.dal.driveguide.R
+import zone.dal.driveguide.saved.SavePlaceReceiver
 import zone.dal.driveguide.tour.Place
 
 /**
  * 내비가 전체 화면일 때도 보이도록 추천 장소를 헤드업 알림으로 띄운다.
- * 알림의 "경유지 추가" 버튼은 [AddWaypointReceiver]가 처리한다.
+ * 알림의 "경유지 추가" 버튼은 [AddWaypointReceiver], "나중에 보기" 버튼은 [SavePlaceReceiver]가 처리한다.
  */
 class PlaceNotifier(private val context: Context) {
 
@@ -53,6 +54,11 @@ class PlaceNotifier(private val context: Context) {
             AddWaypointReceiver.intent(context, place, NOTIFICATION_ID),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
+        val saveForLater = PendingIntent.getBroadcast(
+            context, place.id.hashCode(),
+            SavePlaceReceiver.intent(context, place, NOTIFICATION_ID),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
         val notification = Notification.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_place)
             .setContentTitle(title)
@@ -63,6 +69,9 @@ class PlaceNotifier(private val context: Context) {
             .setTimeoutAfter(60_000)
             .addAction(
                 Notification.Action.Builder(Icon.createWithResource(context, R.drawable.ic_place), "경유지 추가", addWaypoint).build()
+            )
+            .addAction(
+                Notification.Action.Builder(Icon.createWithResource(context, R.drawable.ic_star), "나중에 보기", saveForLater).build()
             )
             .build()
         // 최신 추천 하나만 유지한다.

@@ -64,6 +64,15 @@
         android:contentDescription="뒤로"
         android:src="@drawable/ic_back" />
 
+    <ImageButton
+        android:id="@+id/saveButton"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_gravity="top|end"
+        android:layout_margin="20dp"
+        android:background="@drawable/round_dark_bg"
+        android:contentDescription="저장" />
+
     <include
         layout="@layout/detail_pager"
         android:layout_width="wrap_content"

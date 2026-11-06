@@ -47,5 +47,9 @@
         <receiver
             android:name=".notify.AddWaypointReceiver"
             android:exported="false" />
+
+        <receiver
+            android:name=".saved.SavePlaceReceiver"
+            android:exported="false" />
     </application>
 </manifest>

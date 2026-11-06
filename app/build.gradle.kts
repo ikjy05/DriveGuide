@@ -45,4 +45,5 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.json:json:20240303") // android.jar의 org.json은 단위 테스트에서 동작하지 않는다.
 }
