@@ -7,7 +7,7 @@ import android.content.Intent
 import android.widget.Toast
 import zone.dal.driveguide.tour.Place
 
-/** 헤드업 알림의 "나중에 보기" 처리. 앱 화면이 내비 뒤에 있어도 저장되고, 저장 탭에는 바로 반영된다. */
+/** 헤드업 알림의 "즐겨찾기" 버튼 처리. 앱 화면이 내비 뒤에 있어도 저장되고, 즐겨찾기 탭에는 바로 반영된다. */
 class SavePlaceReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -15,7 +15,7 @@ class SavePlaceReceiver : BroadcastReceiver() {
         SavedPlaces(context).add(place)
         context.getSystemService(NotificationManager::class.java)
             .cancel(intent.getIntExtra(EXTRA_NOTIFICATION_ID, 0))
-        Toast.makeText(context, "${place.title}을(를) 저장했습니다", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, "${place.title}을(를) 즐겨찾기에 추가했습니다", Toast.LENGTH_SHORT).show()
     }
 
     companion object {
