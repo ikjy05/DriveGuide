@@ -16,7 +16,7 @@ import zone.dal.driveguide.tour.Place
 
 /**
  * 내비가 전체 화면일 때도 보이도록 추천 장소를 헤드업 알림으로 띄운다.
- * 알림의 "경유지 추가" 버튼은 [AddWaypointReceiver], "나중에 보기" 버튼은 [SavePlaceReceiver]가 처리한다.
+ * 알림의 "경유지 추가" 버튼은 [AddWaypointReceiver], "즐겨찾기" 버튼은 [SavePlaceReceiver]가 처리한다.
  */
 class PlaceNotifier(private val context: Context) {
 
@@ -71,7 +71,7 @@ class PlaceNotifier(private val context: Context) {
                 Notification.Action.Builder(Icon.createWithResource(context, R.drawable.ic_place), "경유지 추가", addWaypoint).build()
             )
             .addAction(
-                Notification.Action.Builder(Icon.createWithResource(context, R.drawable.ic_star), "나중에 보기", saveForLater).build()
+                Notification.Action.Builder(Icon.createWithResource(context, R.drawable.ic_star), "즐겨찾기", saveForLater).build()
             )
             .build()
         // 최신 추천 하나만 유지한다.

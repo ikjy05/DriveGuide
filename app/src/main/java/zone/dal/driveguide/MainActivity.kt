@@ -307,14 +307,14 @@ class MainActivity : Activity() {
         val places = savedPlaces.all()
         if (places.isEmpty()) {
             addEmptyState(
-                R.drawable.ic_star_large, "저장한 곳이 없어요",
-                "상세 화면의 별이나 알림의 \"나중에 보기\"를 누르면\n여기에 모아 둘게요.",
+                R.drawable.ic_star_large, "즐겨찾기한 곳이 없어요",
+                "상세 화면의 별이나 알림의 \"즐겨찾기\"를 누르면\n여기에 모아 둘게요.",
                 "주변 관광지 보기",
             ) { selectTab(Tab.NEARBY) }
             return
         }
         showBadges = places.map { it.type }.distinct().size > 1
-        // 저장한 순서를 지킨다(최근에 저장한 곳이 앞).
+        // 추가한 순서를 지킨다(최근에 추가한 곳이 앞).
         addCardGrid(places, liveDistance = true) { place ->
             if (place.type == PlaceType.COURSE) "출발지까지" else ""
         }
@@ -387,7 +387,7 @@ class MainActivity : Activity() {
         if (detailScreen.isShowing) detailScreen.refreshLocation()
     }
 
-    /** 거리를 아직 모르면(저장한 곳을 위치 확인 전에 볼 때) null. */
+    /** 거리를 아직 모르면(즐겨찾기를 위치 확인 전에 볼 때) null. */
     private fun distanceText(card: CardBinding): String? {
         val distance = (if (card.liveDistance) liveDistanceText(card.place) else null)
             ?: formatDistance(card.place.distanceMeters).takeIf { !card.liveDistance || card.place.distanceMeters > 0 }

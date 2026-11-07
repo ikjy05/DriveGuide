@@ -62,7 +62,7 @@ class PlaceDetailScreen(
         /** 차 진행 방향 기준 상대 각도. 모르면 null. */
         fun relativeDirection(place: Place): Double?
         fun isSaved(place: Place): Boolean
-        /** 저장 여부를 뒤집는다. 별 표시는 [refreshSaved]로 돌아와 바뀐다. */
+        /** 즐겨찾기 여부를 뒤집는다. 별 표시는 [refreshSaved]로 돌아와 바뀐다. */
         fun toggleSaved(place: Place)
     }
 
@@ -126,7 +126,7 @@ class PlaceDetailScreen(
         forEachSlot { v, p, _ -> bindSubtitle(v, p) }
     }
 
-    /** 저장 목록이 바뀌면(이 화면의 별 또는 알림의 나중에 보기) 별 표시를 맞춘다. */
+    /** 즐겨찾기 목록이 바뀌면(이 화면의 별 또는 알림의 즐겨찾기 버튼) 별 표시를 맞춘다. */
     fun refreshSaved() {
         forEachSlot { v, p, _ -> bindSave(v, p) }
     }
@@ -335,7 +335,7 @@ class PlaceDetailScreen(
         val saved = actions.isSaved(p)
         v.findViewById<ImageButton>(R.id.saveButton).apply {
             setImageResource(if (saved) R.drawable.ic_star_filled else R.drawable.ic_star)
-            contentDescription = if (saved) "저장 취소" else "저장"
+            contentDescription = if (saved) "즐겨찾기 해제" else "즐겨찾기에 추가"
             setOnClickListener { actions.toggleSaved(p) }
         }
     }

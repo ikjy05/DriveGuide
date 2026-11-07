@@ -74,7 +74,7 @@
         android:layout_gravity="top|end"
         android:layout_margin="32dp"
         android:background="@drawable/round_dark_bg"
-        android:contentDescription="저장" />
+        android:contentDescription="즐겨찾기에 추가" />
 
     <include
         layout="@layout/detail_pager"
