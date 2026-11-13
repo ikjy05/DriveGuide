@@ -38,6 +38,8 @@ data class VehicleLocation(
     val address: String?,
     /** 진행 방향(북쪽 0°, 시계방향). 정차 등으로 알 수 없으면 null. */
     val heading: Double? = null,
+    /** 내비에서 위치를 받지 못해 기본 위치([NaviBridge.DEFAULT_LOCATION])를 쓰는 중이면 true. */
+    val isFallback: Boolean = false,
 )
 
 /** 코스 안내 한 구간. [remaining]은 이 구간 뒤에 남은 장소 수. */
@@ -84,6 +86,7 @@ class NaviBridge(context: Context) {
         override fun onCurrentLocationInfo(currentLocationInfo: CurrentLocationInfo) {
             val lat = currentLocationInfo.latitude
             val lng = currentLocationInfo.longitude
+            if (lat == 0.0 && lng == 0.0) return // 아직 측위 전
             _location.value = VehicleLocation(lat, lng, currentLocationInfo.address, headingFor(lat, lng, currentLocationInfo.heading))
         }
 
@@ -133,6 +136,15 @@ class NaviBridge(context: Context) {
     }
 
     fun start(scope: CoroutineScope, intervalMillis: Long = 10_000) {
+        // 내비가 위치를 주지 않으면(내비 미실행·연결 실패 등) 기본 위치로 추천을 보여준다.
+        // 실제 위치가 오면 그 값으로 바로 바뀐다.
+        scope.launch {
+            delay(FALLBACK_DELAY_MILLIS)
+            if (_location.value == null) {
+                Log.w(TAG, "No location from navi; using default location")
+                _location.value = DEFAULT_LOCATION
+            }
+        }
         naviHelper.initialize(
             onConnected = {
                 naviHelper.addListener(listener)
@@ -249,6 +261,9 @@ class NaviBridge(context: Context) {
     )
 
     companion object {
+        /** 내비에서 위치를 받지 못할 때 쓰는 기본 위치: 현대자동차 본사(서울 서초구 헌릉로 12, 양재동). */
+        val DEFAULT_LOCATION = VehicleLocation(37.4632, 127.0427, "서울특별시 서초구 양재동", isFallback = true)
+        private const val FALLBACK_DELAY_MILLIS = 15_000L
         private const val TAG = "NaviBridge"
         private const val ROUTE_POLL_EVERY = 3
         /** 경유지 2곳 + 목적지 1곳. NaviHelper의 WaypointIndex가 FIRST·SECOND뿐이다. */

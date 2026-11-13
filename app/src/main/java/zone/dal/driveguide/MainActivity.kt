@@ -132,7 +132,11 @@ class MainActivity : Activity() {
 
         scope.launch {
             navi.location.filterNotNull().collect { location ->
-                statusText.text = location.address ?: "%.5f, %.5f".format(location.latitude, location.longitude)
+                statusText.text = if (location.isFallback) {
+                    "현재 위치를 확인하지 못해 현대자동차 본사 기준으로 보여드려요"
+                } else {
+                    location.address ?: "%.5f, %.5f".format(location.latitude, location.longitude)
+                }
                 currentLocation = location
                 updateCards()
                 try {
@@ -208,7 +212,8 @@ class MainActivity : Activity() {
         regionText.text = rec.region ?: "현재 위치 주변"
         render()
 
-        if (rec.regionChanged && rec.region != null) {
+        // 기본 위치(실제로 그 지역에 있는 게 아님)일 때는 진입 안내를 하지 않는다.
+        if (rec.regionChanged && rec.region != null && currentLocation?.isFallback != true) {
             val name = rec.region.substringAfterLast(' ')
             val message = StringBuilder().apply {
                 append("${name}에 진입했습니다.")
