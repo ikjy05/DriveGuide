@@ -448,10 +448,11 @@ class MainActivity : Activity() {
                 setOnClickListener { action() }
             }
         }
-        // 스크롤 영역 높이만큼 늘려 세로 가운데에 둔다.
+        // 보이는 목록 영역(탭바에 가려지는 아래 여백 제외) 높이만큼 늘려 세로 가운데에 둔다.
         val scroll = listContainer.parent as View
-        view.minimumHeight = scroll.height
-        if (scroll.height == 0) scroll.post { view.minimumHeight = scroll.height }
+        fun visibleHeight() = scroll.height - scroll.paddingTop - scroll.paddingBottom
+        view.minimumHeight = visibleHeight()
+        if (scroll.height == 0) scroll.post { view.minimumHeight = visibleHeight() }
         listContainer.addView(view)
     }
 
