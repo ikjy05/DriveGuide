@@ -4,7 +4,8 @@
     android:layout_height="match_parent"
     android:background="@color/bg"
     android:orientation="vertical"
-    android:padding="32dp">
+    android:paddingHorizontal="32dp"
+    android:paddingTop="32dp">
 
     <!-- 앱 아이콘 + 지역 이름(Pleos 기본 앱처럼 왼쪽 위에 아이콘을 둔다) -->
     <LinearLayout
@@ -45,69 +46,6 @@
         </LinearLayout>
     </LinearLayout>
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:background="@drawable/tab_group_bg"
-        android:orientation="horizontal">
-
-        <Button
-            android:id="@+id/tabAttractions"
-            style="?android:attr/borderlessButtonStyle"
-            android:background="@drawable/tab_bg"
-            android:stateListAnimator="@null"
-            android:textAllCaps="false"
-            android:textColor="@color/tab_text"
-            android:textStyle="bold"
-            android:layout_width="0dp"
-            android:layout_height="88dp"
-            android:layout_weight="1"
-            android:text="관광지"
-            android:textSize="28sp" />
-
-        <Button
-            android:id="@+id/tabCourses"
-            style="?android:attr/borderlessButtonStyle"
-            android:background="@drawable/tab_bg"
-            android:stateListAnimator="@null"
-            android:textAllCaps="false"
-            android:textColor="@color/tab_text"
-            android:textStyle="bold"
-            android:layout_width="0dp"
-            android:layout_height="88dp"
-            android:layout_weight="1"
-            android:text="드라이브·여행코스"
-            android:textSize="28sp" />
-
-        <Button
-            android:id="@+id/tabUpcoming"
-            style="?android:attr/borderlessButtonStyle"
-            android:background="@drawable/tab_bg"
-            android:stateListAnimator="@null"
-            android:textAllCaps="false"
-            android:textColor="@color/tab_text"
-            android:textStyle="bold"
-            android:layout_width="0dp"
-            android:layout_height="88dp"
-            android:layout_weight="1"
-            android:text="가는 길 추천"
-            android:textSize="28sp" />
-
-        <Button
-            android:id="@+id/tabSaved"
-            style="?android:attr/borderlessButtonStyle"
-            android:background="@drawable/tab_bg"
-            android:stateListAnimator="@null"
-            android:textAllCaps="false"
-            android:textColor="@color/tab_text"
-            android:textStyle="bold"
-            android:layout_width="0dp"
-            android:layout_height="88dp"
-            android:layout_weight="1"
-            android:text="저장"
-            android:textSize="28sp" />
-    </LinearLayout>
 
     <ScrollView
         android:layout_width="match_parent"
@@ -121,4 +59,89 @@
             android:layout_height="wrap_content"
             android:orientation="vertical" />
     </ScrollView>
+    <!-- 하단 탭바(휴대폰 앱처럼 아이콘 + 이름). -->
+    <LinearLayout
+        android:id="@+id/tabBar"
+        android:layout_width="match_parent"
+        android:layout_height="128dp"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/bottom_tab_bar_bg"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/tabAttractions"
+            style="?android:attr/borderlessButtonStyle"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginVertical="6dp"
+            android:background="@drawable/bottom_tab_bg"
+            android:drawableTop="@drawable/tab_ic_place"
+            android:drawablePadding="4dp"
+            android:drawableTint="@color/tab_text"
+            android:gravity="center"
+            android:paddingVertical="8dp"
+            android:stateListAnimator="@null"
+            android:text="관광지"
+            android:textAllCaps="false"
+            android:textColor="@color/tab_text"
+            android:textSize="26sp" />
+
+        <Button
+            android:id="@+id/tabCourses"
+            style="?android:attr/borderlessButtonStyle"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginVertical="6dp"
+            android:background="@drawable/bottom_tab_bg"
+            android:drawableTop="@drawable/tab_ic_course"
+            android:drawablePadding="4dp"
+            android:drawableTint="@color/tab_text"
+            android:gravity="center"
+            android:paddingVertical="8dp"
+            android:stateListAnimator="@null"
+            android:text="드라이브·여행코스"
+            android:textAllCaps="false"
+            android:textColor="@color/tab_text"
+            android:textSize="26sp" />
+
+        <Button
+            android:id="@+id/tabUpcoming"
+            style="?android:attr/borderlessButtonStyle"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginVertical="6dp"
+            android:background="@drawable/bottom_tab_bg"
+            android:drawableTop="@drawable/tab_ic_upcoming"
+            android:drawablePadding="4dp"
+            android:drawableTint="@color/tab_text"
+            android:gravity="center"
+            android:paddingVertical="8dp"
+            android:stateListAnimator="@null"
+            android:text="가는 길 추천"
+            android:textAllCaps="false"
+            android:textColor="@color/tab_text"
+            android:textSize="26sp" />
+
+        <Button
+            android:id="@+id/tabSaved"
+            style="?android:attr/borderlessButtonStyle"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginVertical="6dp"
+            android:background="@drawable/bottom_tab_bg"
+            android:drawableTop="@drawable/tab_ic_saved"
+            android:drawablePadding="4dp"
+            android:drawableTint="@color/tab_text"
+            android:gravity="center"
+            android:paddingVertical="8dp"
+            android:stateListAnimator="@null"
+            android:text="저장"
+            android:textAllCaps="false"
+            android:textColor="@color/tab_text"
+            android:textSize="26sp" />
+    </LinearLayout>
 </LinearLayout>
