@@ -1,10 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 하단 탭: 선택은 아이콘·글자색으로만 표시하고, 누를 때만 배경을 깐다. -->
+<!-- 하단 탭: 선택된 탭 뒤에 둥근 강조 배경을 깐다. -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_selected="true">
+        <shape>
+            <solid android:color="@color/surface_variant" />
+            <corners android:radius="100dp" />
+        </shape>
+    </item>
     <item android:state_pressed="true">
         <shape>
             <solid android:color="@color/pressed" />
-            <corners android:radius="16dp" />
+            <corners android:radius="100dp" />
         </shape>
     </item>
     <item android:drawable="@android:color/transparent" />
