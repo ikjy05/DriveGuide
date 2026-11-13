@@ -167,7 +167,7 @@ class PlaceDetailScreen(
         slots[s] = v
         bindBasic(v, p)
         val d = details[p.id]
-        if (d != null) bindDetail(v, p, d, selected = 0) else showHero(v, p.imageUrl)
+        if (d != null) bindDetail(v, p, d, selected = 0) else showHero(v, p.type, p.imageUrl)
         applyRestriction(v, p)
         ensureLoaded(p)
     }
@@ -353,7 +353,7 @@ class PlaceDetailScreen(
     private fun bindDetail(v: View, p: Place, d: PlaceDetail, selected: Int) {
         v.findViewById<View>(R.id.loading).visibility = View.GONE
 
-        showHero(v, d.images.getOrNull(selected) ?: p.imageUrl)
+        showHero(v, p.type, d.images.getOrNull(selected) ?: p.imageUrl)
         bindThumbs(v, d.images, selected)
         bindChips(v, d)
 
@@ -394,13 +394,12 @@ class PlaceDetailScreen(
         applyRestriction(v, p)
     }
 
-    private fun showHero(v: View, url: String?) {
+    private fun showHero(v: View, type: PlaceType, url: String?) {
         val image = v.findViewById<ImageView>(R.id.heroImage)
         image.scaleType = ImageView.ScaleType.CENTER_CROP
         // 사진이 창 전체를 채우므로 화면 폭 기준으로 디코딩한다.
         ImageLoader.load(scope, image, url, activity.resources.displayMetrics.widthPixels) {
-            image.scaleType = ImageView.ScaleType.CENTER
-            image.setImageResource(R.drawable.ic_place_large)
+            Placeholder.show(image, type)
         }
     }
 
@@ -442,11 +441,11 @@ class PlaceDetailScreen(
         val image = v.findViewById<ImageView>(R.id.heroImage)
         if (fade) {
             image.animate().alpha(0.2f).setDuration(250).withEndAction {
-                showHero(v, images[i])
+                showHero(v, place?.type ?: PlaceType.ATTRACTION, images[i])
                 image.animate().alpha(1f).setDuration(450).start()
             }.start()
         } else {
-            showHero(v, images[i])
+            showHero(v, place?.type ?: PlaceType.ATTRACTION, images[i])
         }
         bindThumbs(v, images, i)
     }
@@ -523,8 +522,7 @@ class PlaceDetailScreen(
         row.findViewById<TextView>(R.id.stopName).text = stop.name
         val image = row.findViewById<ImageView>(R.id.stopImage)
         ImageLoader.load(scope, image, stop.imageUrl, (128 * activity.resources.displayMetrics.density).toInt()) {
-            image.scaleType = ImageView.ScaleType.CENTER
-            image.setImageResource(R.drawable.ic_place)
+            Placeholder.show(image, PlaceType.ATTRACTION) // 코스 포함 장소는 관광지
         }
         row.findViewById<Button>(R.id.stopWaypoint).setOnClickListener {
             // detailInfo2에는 좌표가 없어서 누를 때 조회한다.

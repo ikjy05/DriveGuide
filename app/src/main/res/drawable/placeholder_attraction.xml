@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 사진이 없는 관광지: 하늘과 언덕, 장소 핀 (tools/icon/gen_placeholder.py로 생성) -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="640dp"
+    android:height="360dp"
+    android:viewportWidth="160"
+    android:viewportHeight="90">
+    <path android:pathData="M0,0h160v90h-160z"><aapt:attr name="android:fillColor"><gradient android:type="linear" android:startX="0" android:startY="0" android:endX="0" android:endY="90"><item android:offset="0" android:color="#FF9AD8FF" /><item android:offset="0.6" android:color="#FF5E9DF2" /><item android:offset="1" android:color="#FF3D6FDC" /></gradient></aapt:attr></path>
+    <path android:pathData="M74.00,34.00a30.00,30.00 0 1,0 60.00,0a30.00,30.00 0 1,0 -60.00,0z"><aapt:attr name="android:fillColor"><gradient android:type="radial" android:centerX="104" android:centerY="34" android:gradientRadius="30"><item android:offset="0" android:color="#E6FFF3C4" /><item android:offset="0.4" android:color="#73FFD27A" /><item android:offset="1" android:color="#00FFD27A" /></gradient></aapt:attr></path>
+    <path android:pathData="M0,46 C18,38 34,36 50,40 C66,44 78,34 96,33 C116,32 134,42 160,38 L160,90 L0,90z" android:fillColor="#8DBBFF" android:fillAlpha="0.6" />
+    <path android:pathData="M0,56 C24,48 46,50 66,54 C90,59 112,48 136,49 C146,49 154,51 160,52 L160,90 L0,90z" android:fillColor="#4F82E6" android:fillAlpha="0.95" />
+    <path android:pathData="M0,68 C26,61 52,64 76,68 C100,72 126,64 160,62 L160,90 L0,90z" android:fillColor="#3463CF" />
+    <path android:pathData="M0,80 C30,74 60,77 88,80 C114,83 138,78 160,76 L160,90 L0,90z" android:fillColor="#2549AE" />
+    <path android:pathData="M22.80,66.00 C22.80,61.00 25.00,58.00 26.00,58.00 C27.00,58.00 29.20,61.00 29.20,66.00z" android:fillColor="#2A9A6E" />
+    <path android:pathData="M30.44,67.00 C30.44,63.00 32.20,60.60 33.00,60.60 C33.80,60.60 35.56,63.00 35.56,67.00z" android:fillColor="#2A9A6E" />
+    <path android:pathData="M133.12,61.00 C133.12,56.50 135.10,53.80 136.00,53.80 C136.90,53.80 138.88,56.50 138.88,61.00z" android:fillColor="#2A9A6E" />
+    <path android:pathData="M125.76,63.00 C125.76,59.50 127.30,57.40 128.00,57.40 C128.70,57.40 130.24,59.50 130.24,63.00z" android:fillColor="#2A9A6E" />
+    <path android:pathData="M73.49,56.50a6.51,2.02 0 1,0 13.02,0a6.51,2.02 0 1,0 -13.02,0z" android:fillColor="#0B1E5C" android:fillAlpha="0.28" />
+    <path android:pathData="M70.70,43.60a9.30,9.30 0 1,0 18.60,0a9.30,9.30 0 1,0 -18.60,0z"><aapt:attr name="android:fillColor"><gradient android:type="radial" android:centerX="80" android:centerY="43.6" android:gradientRadius="9.3"><item android:offset="0" android:color="#80FFFFFF" /><item android:offset="1" android:color="#00FFFFFF" /></gradient></aapt:attr></path>
+    <path android:pathData="M80.93,37.56C76.84,37.56 73.49,40.90 73.49,45.00c0.00,5.58 7.44,12.40 7.44,12.40s7.44,-6.82 7.44,-12.40c0.00,-4.09 -3.35,-7.44 -7.44,-7.44z" android:fillColor="#0B1E5C" android:fillAlpha="0.22" />
+    <path android:pathData="M80.00,36.16C75.91,36.16 72.56,39.51 72.56,43.60c0.00,5.58 7.44,12.40 7.44,12.40s7.44,-6.82 7.44,-12.40c0.00,-4.09 -3.35,-7.44 -7.44,-7.44z"><aapt:attr name="android:fillColor"><gradient android:type="linear" android:startX="0" android:startY="36.16" android:endX="0" android:endY="56"><item android:offset="0" android:color="#FFFFC062" /><item android:offset="1" android:color="#FFFF6B3D" /></gradient></aapt:attr></path>
+    <path android:pathData="M77.02,43.60a2.98,2.98 0 1,0 5.95,0a2.98,2.98 0 1,0 -5.95,0z" android:fillColor="#FFFFFF" />
+</vector>

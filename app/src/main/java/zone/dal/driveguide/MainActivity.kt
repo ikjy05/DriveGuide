@@ -35,6 +35,7 @@ import zone.dal.driveguide.ui.Direction
 import zone.dal.driveguide.ui.DrivingRestriction
 import zone.dal.driveguide.ui.ImageLoader
 import zone.dal.driveguide.ui.PlaceDetailScreen
+import zone.dal.driveguide.ui.Placeholder
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.combine
@@ -371,9 +372,8 @@ class MainActivity : Activity() {
 
         val image = card.findViewById<ImageView>(R.id.image)
         ImageLoader.load(scope, image, place.imageUrl, widthPx) {
-            // 이미지가 없는 장소는 위치 아이콘으로 대신한다.
-            image.scaleType = ImageView.ScaleType.CENTER
-            image.setImageResource(R.drawable.ic_place_large)
+            // 사진이 없는 장소는 종류별 일러스트로 대신한다.
+            Placeholder.show(image, place.type)
         }
         return card
     }
