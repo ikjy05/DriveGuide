@@ -95,14 +95,14 @@
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/tabCourses"
                     style="@style/TabToolbarButton"
-                    android:text="드라이브·여행코스"
+                    android:text="코스"
                     android:textSize="30sp"
                     app:icon="@drawable/tab_ic_course" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/tabUpcoming"
                     style="@style/TabToolbarButton"
-                    android:text="가는 길 추천"
+                    android:text="가는 길"
                     android:textSize="30sp"
                     app:icon="@drawable/tab_ic_upcoming" />
 

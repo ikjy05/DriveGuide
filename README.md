@@ -27,11 +27,12 @@ Pleos 내비에서 현재 위치를 받아, 지나가는 지역의 관광지와 
 ## 분할 화면과 알림
 
 - **카드 목록**: 추천 장소는 16:9 사진 카드로 보여주고, 제목·거리·주소·"+ 경유지" 버튼을 사진 아래쪽 그라데이션 위에 얹습니다(`layout/item_place_card.xml`, `ui/AspectRatioFrameLayout.kt`). 이미지는 TourAPI `firstimage`(약 940px)를 HTTPS로 받아 카드 폭에 맞게 줄여 디코딩합니다(`ui/ImageLoader.kt`, 메모리 + 50MB 디스크 캐시). 이미지가 없는 장소는 위치 아이콘을 표시합니다. 여행코스는 대표 이미지가 약 4%에만 있어서, 화면에 나오는 코스에 한해 `detailInfo2`로 포함 장소의 첫 이미지를 조회해 쓰고 코스 캐시에 저장합니다.
-- **분할 화면**: Pleos Connect는 내비와 앱 하나를 나란히 띄웁니다(Connect-S 1:1, Connect-W 2:1·1:2). 창 폭이 1200dp 이상이면 `layout-w1200dp`/`values-w1200dp`(카드 2열), 그보다 좁으면 `layout`/`values`(카드 1열, 짧은 탭 이름)를 씁니다. 분할 전환 시 재시작하지 않고 `onConfigurationChanged`에서 레이아웃만 바꾸므로 추천 목록이 유지됩니다.
+- **분할 화면**: Pleos Connect는 내비와 앱 하나를 나란히 띄웁니다(Connect-S 1:1, Connect-W 2:1·1:2). 창 폭이 1200dp 이상이면 `layout-w1200dp`/`values-w1200dp`(카드 2열), 그보다 좁으면 `layout`/`values`(카드 1열)를 씁니다. 분할 전환 시 재시작하지 않고 `onConfigurationChanged`에서 레이아웃만 바꾸므로 추천 목록이 유지됩니다.
 - **헤드업 알림**(`notify/`): 지역에 진입하거나 가는 길 추천이 새로 생기면 내비 위에 알림을 띄웁니다. "경유지 추가" 버튼은 `AddWaypointReceiver`가 NaviHelper에 따로 연결해 처리하므로, 앱 화면이 없어도 동작합니다. 같은 장소는 한 번만, 가는 길 알림은 3분 간격으로 띄웁니다.
 
 ## 테마
 
+- 하단 탭(관광지 · 코스 · 가는 길 · 저장)은 Material 3 플로팅 툴바(`FloatingToolbarLayout`, Material Components 1.14.0)로 목록 위에 띄웁니다. 툴바에만 Material3 테마를 씌우고 색은 앱 색에 맞춥니다. 탭 이름은 창 폭과 관계없이 같습니다.
 - 시스템(Pleos) 라이트/다크 설정을 따릅니다. 앱 테마는 `Theme.DeviceDefault.DayNight` 기반 `AppTheme`이고, 색은 `values/colors.xml`(라이트)과 `values-night/colors.xml`(다크)에 같은 이름으로 정의합니다.
 - 버튼은 Pleos 기본 앱 규칙을 따릅니다. 주요 버튼(경유지, 선택된 탭)은 라이트·다크 모두 검정이고, 보조 버튼(목적지로, 전화, 읽어주기)은 라이트에서 흰색, 다크에서 검정입니다(`btn_*` 색).
 - 사진 위에 얹는 글씨, 그라데이션, 파란 배지는 테마와 무관하게 고정입니다.
