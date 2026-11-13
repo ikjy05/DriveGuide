@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 하단 툴바 탭 배경: 선택된 탭만 둥근 강조 배경. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:color="@color/surface_variant" android:state_selected="true" />
+    <item android:color="@android:color/transparent" />
+</selector>

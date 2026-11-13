@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- 좁은 창(분할 화면) 레이아웃. 넓은 창은 layout-w1200dp. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/bg"
@@ -71,97 +72,50 @@
                 android:orientation="vertical" />
         </ScrollView>
 
-        <!-- 하단 탭바: 아이콘 + 이름, 아래에 띄운 알약 모양. -->
-        <LinearLayout
+        <!-- 하단 탭바: Material 3 플로팅 툴바. 목록 위에 떠 있고, 선택된 탭만 아이콘 + 둥근 배경. -->
+        <com.google.android.material.floatingtoolbar.FloatingToolbarLayout
             android:id="@+id/tabBar"
-            android:layout_width="match_parent"
-            android:layout_height="120dp"
-            android:layout_gravity="bottom"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|center_horizontal"
             android:layout_marginBottom="16dp"
-            android:background="@drawable/bottom_tab_bar_bg"
-            android:elevation="6dp"
-            android:orientation="horizontal"
-            android:paddingHorizontal="10dp">
+            android:theme="@style/ThemeOverlay.DriveGuide.TabToolbar">
 
-            <Button
-                android:id="@+id/tabAttractions"
-                style="?android:attr/borderlessButtonStyle"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:layout_marginHorizontal="4dp"
-                android:layout_marginVertical="10dp"
-                android:background="@drawable/bottom_tab_bg"
-                android:drawableTop="@drawable/tab_ic_place"
-                android:drawablePadding="4dp"
-                android:drawableTint="@color/tab_text"
-                android:gravity="center"
-                android:paddingVertical="8dp"
-                android:stateListAnimator="@null"
-                android:text="관광지"
-                android:textAllCaps="false"
-                android:textColor="@color/tab_text"
-                android:textSize="24sp" />
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="116dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="8dp">
 
-            <Button
-                android:id="@+id/tabCourses"
-                style="?android:attr/borderlessButtonStyle"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:layout_marginHorizontal="4dp"
-                android:layout_marginVertical="10dp"
-                android:background="@drawable/bottom_tab_bg"
-                android:drawableTop="@drawable/tab_ic_course"
-                android:drawablePadding="4dp"
-                android:drawableTint="@color/tab_text"
-                android:gravity="center"
-                android:paddingVertical="8dp"
-                android:stateListAnimator="@null"
-                android:text="코스"
-                android:textAllCaps="false"
-                android:textColor="@color/tab_text"
-                android:textSize="24sp" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/tabAttractions"
+                    style="@style/TabToolbarButton"
+                    android:text="관광지"
+                    android:textSize="28sp"
+                    app:icon="@drawable/tab_ic_place" />
 
-            <Button
-                android:id="@+id/tabUpcoming"
-                style="?android:attr/borderlessButtonStyle"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:layout_marginHorizontal="4dp"
-                android:layout_marginVertical="10dp"
-                android:background="@drawable/bottom_tab_bg"
-                android:drawableTop="@drawable/tab_ic_upcoming"
-                android:drawablePadding="4dp"
-                android:drawableTint="@color/tab_text"
-                android:gravity="center"
-                android:paddingVertical="8dp"
-                android:stateListAnimator="@null"
-                android:text="가는 길"
-                android:textAllCaps="false"
-                android:textColor="@color/tab_text"
-                android:textSize="24sp" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/tabCourses"
+                    style="@style/TabToolbarButton"
+                    android:text="코스"
+                    android:textSize="28sp"
+                    app:icon="@drawable/tab_ic_course" />
 
-            <Button
-                android:id="@+id/tabSaved"
-                style="?android:attr/borderlessButtonStyle"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:layout_marginHorizontal="4dp"
-                android:layout_marginVertical="10dp"
-                android:background="@drawable/bottom_tab_bg"
-                android:drawableTop="@drawable/tab_ic_saved"
-                android:drawablePadding="4dp"
-                android:drawableTint="@color/tab_text"
-                android:gravity="center"
-                android:paddingVertical="8dp"
-                android:stateListAnimator="@null"
-                android:text="저장"
-                android:textAllCaps="false"
-                android:textColor="@color/tab_text"
-                android:textSize="24sp" />
-        </LinearLayout>
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/tabUpcoming"
+                    style="@style/TabToolbarButton"
+                    android:text="가는 길"
+                    android:textSize="28sp"
+                    app:icon="@drawable/tab_ic_upcoming" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/tabSaved"
+                    style="@style/TabToolbarButton"
+                    android:text="저장"
+                    android:textSize="28sp"
+                    app:icon="@drawable/tab_ic_saved" />
+            </LinearLayout>
+        </com.google.android.material.floatingtoolbar.FloatingToolbarLayout>
     </FrameLayout>
 </LinearLayout>

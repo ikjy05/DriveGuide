@@ -43,6 +43,8 @@ kotlin {
 dependencies {
     implementation("ai.pleos.playground:NaviHelper:3.0.5")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
+    // 하단 플로팅 툴바(Material 3 Expressive FloatingToolbarLayout). 앱 테마는 그대로 두고 툴바에만 Material3 테마를 씌운다.
+    implementation("com.google.android.material:material:1.14.0")
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.json:json:20240303") // android.jar의 org.json은 단위 테스트에서 동작하지 않는다.

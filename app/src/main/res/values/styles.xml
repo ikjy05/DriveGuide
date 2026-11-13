@@ -8,12 +8,42 @@
         <item name="android:colorAccent">@color/accent</item>
     </style>
 
+    <!-- 하단 플로팅 툴바에만 씌우는 Material3 테마. 색은 앱 색(colors.xml)에 맞춘다. -->
+    <style name="ThemeOverlay.DriveGuide.TabToolbar" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorSurfaceContainer">@color/surface</item>
+        <item name="colorSecondaryContainer">@color/surface_variant</item>
+        <item name="colorOnSecondaryContainer">@color/text_primary</item>
+        <item name="colorOnSurface">@color/text_primary</item>
+        <item name="colorOnSurfaceVariant">@color/text_secondary</item>
+        <item name="colorPrimary">@color/text_primary</item>
+    </style>
+
+    <!-- 하단 툴바의 탭 버튼: 선택된 탭만 둥근 배경과 아이콘을 보인다(아이콘은 MainActivity에서 켜고 끈다). -->
+    <style name="TabToolbarButton" parent="Widget.Material3.Button.TextButton">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <!-- 기본 TextButton 스타일이 paddingLeft/Right를 쓰므로 같은 속성으로 덮는다. -->
+        <item name="android:paddingLeft">36dp</item>
+        <item name="android:paddingRight">36dp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textColor">@color/tab_text</item>
+        <item name="android:textStyle">bold</item>
+        <item name="backgroundTint">@color/tab_pill_bg</item>
+        <item name="iconTint">@color/tab_text</item>
+        <item name="iconSize">44dp</item>
+        <item name="iconPadding">14dp</item>
+        <item name="rippleColor">@color/pressed</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.Material3.Corner.Full</item>
+    </style>
+
     <!-- 상세 화면 알약 버튼 -->
     <style name="PillButton" parent="@android:style/Widget.DeviceDefault.Button.Borderless">
         <item name="android:layout_height">84dp</item>
         <item name="android:drawablePadding">10dp</item>
         <item name="android:paddingStart">26dp</item>
-        <item name="android:paddingEnd">32dp</item>
+        <item name="android:paddingEnd">40dp</item>
         <item name="android:stateListAnimator">@null</item>
         <item name="android:textAllCaps">false</item>
         <item name="android:textSize">27sp</item>

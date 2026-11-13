@@ -14,6 +14,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.Button
+import com.google.android.material.button.MaterialButton
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -59,6 +60,8 @@ class MainActivity : Activity() {
     private lateinit var statusText: TextView
     private lateinit var listContainer: LinearLayout
     private lateinit var tabButtons: Map<Tab, Button>
+    /** 하단 툴바 탭의 아이콘. 선택된 탭에만 보인다. */
+    private lateinit var tabIcons: Map<Tab, android.graphics.drawable.Drawable?>
 
     private var latest: Recommendation? = null
     private var upcoming: List<UpcomingSection>? = null
@@ -189,6 +192,7 @@ class MainActivity : Activity() {
             Tab.UPCOMING to findViewById(R.id.tabUpcoming),
             Tab.SAVED to findViewById(R.id.tabSaved),
         )
+        tabIcons = tabButtons.mapValues { (_, button) -> (button as? MaterialButton)?.icon }
         tabButtons.forEach { (tab, button) -> button.setOnClickListener { selectTab(tab) } }
         selectTab(selectedTab)
     }
@@ -248,6 +252,7 @@ class MainActivity : Activity() {
         // 밑줄(tab_bg)과 글자색(tab_text)은 selected 상태에 따라 바뀐다. 굵기만 직접 바꾼다.
         tabButtons.forEach { (t, button) ->
             button.isSelected = t == tab
+            (button as? MaterialButton)?.icon = if (t == tab) tabIcons[t] else null
             button.setTypeface(null, if (t == tab) Typeface.BOLD else Typeface.NORMAL)
         }
         render()
