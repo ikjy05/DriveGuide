@@ -128,7 +128,7 @@ class NaviBridge(context: Context) {
 
         override fun onError(errorCode: NaviErrorCode) {
             Log.w(TAG, "Navi error: $errorCode")
-            _error.value = "내비 오류: $errorCode"
+            _error.value = "내비 요청을 처리하지 못했어요."
         }
     }
 
@@ -148,7 +148,7 @@ class NaviBridge(context: Context) {
             },
             onFailed = { t ->
                 Log.e(TAG, "NaviHelper connection failed", t)
-                _error.value = "내비 서비스 연결 실패: ${t.message}"
+                _error.value = "내비에 연결하지 못했어요."
             },
         )
     }

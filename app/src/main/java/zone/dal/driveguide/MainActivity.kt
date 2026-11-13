@@ -143,7 +143,8 @@ class MainActivity : Activity() {
                     engine.onLocation(location)?.let(::onRecommendation)
                 } catch (e: Exception) {
                     Log.e(TAG, "Recommendation failed", e)
-                    statusText.text = "추천 정보를 불러오지 못했습니다: ${e.message}"
+                    // 예외 내용은 로그로만 남기고, 화면에는 사용자가 할 수 있는 일만 알린다.
+                    statusText.text = "추천 정보를 불러오지 못했어요. 네트워크 연결을 확인해 주세요."
                 }
             }
         }
