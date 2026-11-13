@@ -52,6 +52,9 @@ class NaviBridge(context: Context) {
 
     private val naviHelper = NaviHelper(context.applicationContext)
     private var pollJob: Job? = null
+    private var scope: CoroutineScope? = null
+    /** 경로가 사라진 것으로 보이면 잠시 기다렸다가 비운다(재탐색 중에는 기존 경로를 유지). */
+    private var clearJob: Job? = null
 
     private val _location = MutableStateFlow<VehicleLocation?>(null)
     val location: StateFlow<VehicleLocation?> = _location.asStateFlow()
@@ -133,6 +136,7 @@ class NaviBridge(context: Context) {
     }
 
     fun start(scope: CoroutineScope, intervalMillis: Long = 10_000) {
+        this.scope = scope
         naviHelper.initialize(
             onConnected = {
                 naviHelper.addListener(listener)
@@ -181,10 +185,29 @@ class NaviBridge(context: Context) {
         naviHelper.getWaypointInfo()
     }
 
+    /**
+     * 경유지 추가·재탐색 때 내비는 기존 경로를 취소(onRouteCancelled)하고 몇 초간 목적지 없이 있다가 새 경로를 알린다.
+     * 그 사이 "목적지를 설정해 주세요"가 깜빡이지 않도록, 경로가 사라지면 [ROUTE_GRACE_MILLIS] 동안 기존 경로를 유지하고
+     * 그동안 새 목적지가 오지 않을 때만 비운다. 바로 다시 조회해 새 경로가 오면 즉시 바뀐다.
+     */
     private fun clearRoute() {
         destination = null
         waypoints = emptyList()
-        _route.value = null
+        scheduleClear()
+        requestRoute()
+    }
+
+    private fun scheduleClear() {
+        if (_route.value == null || clearJob?.isActive == true) return
+        val s = scope
+        if (s == null) {
+            _route.value = null
+            return
+        }
+        clearJob = s.launch {
+            delay(ROUTE_GRACE_MILLIS)
+            if (destination == null) _route.value = null
+        }
     }
 
     private fun publishRoute() {
@@ -193,7 +216,12 @@ class NaviBridge(context: Context) {
         courseLegEnd?.let { end ->
             if (dest != null && distanceMeters(end.latitude, end.longitude, dest.latitude, dest.longitude) > COURSE_MATCH_METERS) stopCourse()
         }
-        _route.value = dest?.let { RouteState(waypoints, it) }
+        if (dest == null) {
+            scheduleClear()
+        } else {
+            clearJob?.cancel()
+            _route.value = RouteState(waypoints, dest)
+        }
     }
 
     /**
@@ -251,6 +279,7 @@ class NaviBridge(context: Context) {
     companion object {
         private const val TAG = "NaviBridge"
         private const val ROUTE_POLL_EVERY = 3
+        private const val ROUTE_GRACE_MILLIS = 15_000L
         /** 경유지 2곳 + 목적지 1곳. NaviHelper의 WaypointIndex가 FIRST·SECOND뿐이다. */
         const val COURSE_STOPS_PER_LEG = 3
         private const val COURSE_MATCH_METERS = 300.0
