@@ -1,4 +1,4 @@
-# DriveGuide (Pleos Connect 프로토타입)
+# 길목 (DriveGuide · Pleos Connect 프로토타입)
 
 Pleos 내비에서 현재 위치를 받아, 지나가는 지역의 관광지와 여행(드라이브) 코스를 추천하고 경유지로 추가하는 앱입니다.
 
@@ -64,17 +64,7 @@ Pleos 내비에서 현재 위치를 받아, 지나가는 지역의 관광지와 
 
 ## 라이선스
 
-이 저장소의 소스 코드는 [Apache License 2.0](LICENSE)을 따릅니다. 아래 외부 SDK와 데이터는 각자의 약관을 따르며, Apache-2.0 적용 대상이 아닙니다.
+DriveGuide는 [Apache License 2.0](LICENSE)을 따릅니다.
 
-### Pleos SDK (NaviHelper)
-
-- `ai.pleos.playground:NaviHelper`는 오픈소스가 아니며 [Pleos Playground 이용약관](https://pleos.ai/playground/external/use-policy?partnerId=hmg-kr-42dot-developers)을 따릅니다. 이 저장소의 Apache-2.0 라이선스는 이 SDK에 적용되지 않습니다.
-- SDK 바이너리는 저장소에 포함하지 않고, Pleos Maven 저장소(`nexus-playground.pleos.ai`)에서 빌드할 때 받아 옵니다.
-- 이 앱을 실제 고객에게 서비스하려면 약관에 따라 사업자 명의로 서비스 문서를 제출해야 합니다.
-
-### 한국관광공사 TourAPI
-
-- 관광지·여행코스 정보와 사진은 [공공데이터포털](https://www.data.go.kr/data/15101578/openapi.do)의 "한국관광공사_국문 관광정보 서비스_GW"(TourAPI)에서 받아 옵니다. 데이터 출처: 한국관광공사.
-- 이 데이터는 이용허락범위에 제한이 없습니다. 사진은 공공누리 제1유형(출처 표시) 또는 제3유형(출처 표시, 변경 금지)으로 제공됩니다. 두 유형 모두 출처를 표시해야 하고, 제3유형 사진은 변경할 수 없습니다. 앱은 상세 화면에 "사진·정보 제공: 한국관광공사"를 표시합니다.
-- 피사체의 명예를 훼손하는 등 일반 정서에 반하는 용도로 사진을 쓰거나 기업 CI·BI로 쓰는 것은 금지되어 있습니다.
-- 데이터와 사진은 저장소에 포함하지 않으며, 저작권은 한국관광공사와 각 원저작자에게 있습니다.
+- **Pleos SDK (NaviHelper)**: Pleos Playground 이용약관을 따릅니다.
+- **한국관광공사 TourAPI**: 관광 정보와 사진의 저작권은 한국관광공사와 원저작자에게 있습니다.
