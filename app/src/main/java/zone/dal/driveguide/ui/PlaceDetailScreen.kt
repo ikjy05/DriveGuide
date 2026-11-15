@@ -8,11 +8,18 @@ import android.content.res.ColorStateList
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
+import android.os.SystemClock
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.style.ForegroundColorSpan
 import android.util.Log
+import android.view.GestureDetector
+import android.view.MotionEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.DecelerateInterpolator
+import android.view.animation.LinearInterpolator
 import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.HorizontalScrollView
@@ -28,6 +35,7 @@ import zone.dal.driveguide.tour.Place
 import zone.dal.driveguide.tour.PlaceDetail
 import zone.dal.driveguide.tour.PlaceType
 import zone.dal.driveguide.tour.TourApiClient
+import zone.dal.driveguide.voice.ReadAlongText
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -56,7 +64,12 @@ class PlaceDetailScreen(
         fun setDestination(place: Place)
         /** 코스 장소들을 순서대로 내비 경로로 보낸다. */
         fun startCourse(course: Place, stops: List<Place>)
-        fun speak(text: String)
+        /**
+         * [text]를 읽는다. 소리가 나기 시작하면 [onStarted], 끝나면 [onEnded]가 불린다.
+         * [onEnded]의 인자는 끝까지 읽었으면 true, 멈췄거나 다른 안내에 끊겼으면 false.
+         */
+        fun speak(text: String, onStarted: () -> Unit, onEnded: (completed: Boolean) -> Unit)
+        fun stopSpeaking()
         /** 현재 위치 기준 거리 문구(예: "2.3km", "출발지까지 4.1km"). 모르면 null. */
         fun distanceLabel(place: Place): String?
         /** 차 진행 방향 기준 상대 각도. 모르면 null. */
@@ -82,6 +95,21 @@ class PlaceDetailScreen(
     private val loading = HashMap<String, Job>()
     private var selectedImage = 0
     private var restricted = false
+    /** 읽어주기 중인 장소. 그 장소 화면의 버튼은 "그만읽기"가 된다. */
+    private var readingPlaceId: String? = null
+    /** 따라 읽기 상태. 읽은 글자 수([ReadAlong.pos])만큼 소개글을 흰색으로 채운다. */
+    private var readAlong: ReadAlong? = null
+
+    private class ReadAlong(val placeId: String, val text: String) {
+        val sentences = ReadAlongText.sentences(text)
+        /** 소개글에서 이미 읽은 글자 수. */
+        var pos = 0
+        var animator: ValueAnimator? = null
+        var sentenceStartedAt = 0L
+    }
+
+    /** 1ms에 읽는 글자 수. 문장을 다 읽을 때마다 실제 걸린 시간으로 맞춘다(처음은 초당 7자). */
+    private var charsPerMs = 0.007
     private var slideshowJob: Job? = null
     private val photoViewer = PhotoViewer(activity, scope)
 
@@ -105,6 +133,8 @@ class PlaceDetailScreen(
     }
 
     fun close() {
+        // 닫으면 그 장소 소개를 계속 읽을 이유가 없다.
+        stopReading()
         if (photoViewer.isShowing) photoViewer.close()
         animator?.cancel()
         slideshowJob?.cancel()
@@ -165,7 +195,7 @@ class PlaceDetailScreen(
         val v = LayoutInflater.from(activity).inflate(R.layout.view_place_detail, h, false)
         h.addView(v)
         slots[s] = v
-        bindBasic(v, p)
+        bindBasic(v, p, index + s - 1)
         val d = details[p.id]
         if (d != null) bindDetail(v, p, d, selected = 0) else showHero(v, p.type, p.imageUrl)
         applyRestriction(v, p)
@@ -211,17 +241,25 @@ class PlaceDetailScreen(
             swipe.findViewById(R.id.pager), swipe.findViewById(R.id.backButton), swipe.findViewById(R.id.saveButton),
         )
 
-        swipe.findViewById<View>(R.id.pager).visibility = if (places.size > 1) View.VISIBLE else View.GONE
-        swipe.findViewById<TextView>(R.id.pagerText).text = "${index + 1} / ${places.size}"
-        swipe.findViewById<View>(R.id.prevButton).apply {
-            isEnabled = index > 0
+        bindPagerLabel(swipe, index)
+        swipe.findViewById<View>(R.id.prevButton).setOnClickListener { settle(-1) }
+        swipe.findViewById<View>(R.id.nextButton).setOnClickListener { settle(1) }
+    }
+
+    /**
+     * ‹ 3 / 10 › 묶음을 [at]번째 장소 기준으로 채운다. 이웃 화면에도 미리 채워 두어야
+     * 넘기는 동안 숫자가 사라졌다 나타나지 않고 뒤로 버튼처럼 화면과 함께 들어온다.
+     */
+    private fun bindPagerLabel(v: View, at: Int) {
+        v.findViewById<View>(R.id.pager).visibility = if (places.size > 1 && at >= 0) View.VISIBLE else View.GONE
+        v.findViewById<TextView>(R.id.pagerText).text = "${at + 1} / ${places.size}"
+        v.findViewById<View>(R.id.prevButton).apply {
+            isEnabled = at > 0
             alpha = if (isEnabled) 1f else 0.3f
-            setOnClickListener { settle(-1) }
         }
-        swipe.findViewById<View>(R.id.nextButton).apply {
-            isEnabled = index < places.lastIndex
+        v.findViewById<View>(R.id.nextButton).apply {
+            isEnabled = at < places.lastIndex
             alpha = if (isEnabled) 1f else 0.3f
-            setOnClickListener { settle(1) }
         }
     }
 
@@ -252,6 +290,8 @@ class PlaceDetailScreen(
     private fun shift(step: Int) {
         val h = host ?: return
         slideshowJob?.cancel()
+        // 다른 장소로 넘어가면 앞 장소 소개는 그만 읽는다.
+        stopReading()
         index += step
         selectedImage = 0
         if (step == 1) {
@@ -305,7 +345,8 @@ class PlaceDetailScreen(
 
     // ---- 화면 채우기 ----
 
-    private fun bindBasic(v: View, p: Place) {
+    /** [at]은 목록에서 이 장소의 순번(쪽 번호용). 같은 장소가 목록에 두 번 있어도 화면 순서대로 센다. */
+    private fun bindBasic(v: View, p: Place, at: Int) {
         v.findViewById<TextView>(R.id.title).text = p.title
         bindSubtitle(v, p)
         v.findViewById<TextView>(R.id.badge).apply {
@@ -327,8 +368,120 @@ class PlaceDetailScreen(
             setOnClickListener { actions.setDestination(p) }
         }
         v.findViewById<View>(R.id.btnCall).visibility = View.GONE
-        // 이웃 화면은 끄는 동안 보이기만 하므로 화살표 묶음은 숨긴다(가운데 화면에서 다시 보인다).
-        v.findViewById<View>(R.id.pager).visibility = View.GONE
+        // 이웃 화면도 쪽 번호를 미리 보인다(버튼 동작은 가운데 화면이 되면 bindPager에서 연결).
+        bindPagerLabel(v, at)
+    }
+
+    private fun stopReading() {
+        if (readingPlaceId == null) return
+        endReading()
+        actions.stopSpeaking()
+    }
+
+    /** 읽기 상태를 지우고 버튼·글자색을 되돌린다(소리는 이미 멈췄거나 끝난 상태). */
+    private fun endReading() {
+        readAlong?.animator?.cancel()
+        readAlong = null
+        readingPlaceId = null
+        refreshReadButtons()
+        refreshReadFill()
+    }
+
+    /**
+     * [p]의 소개글을 [from]번째 글자(낱말 첫 글자)부터 읽는다. 처음부터면 장소 이름을 먼저 읽는다.
+     * 문장 하나씩 읽으며, 읽는 동안 그 문장 안의 위치는 읽는 빠르기로 어림해 채운다.
+     */
+    private fun startReading(p: Place, overview: String, from: Int) {
+        readAlong?.animator?.cancel()
+        val r = ReadAlong(p.id, overview).also { it.pos = from }
+        readAlong = r
+        readingPlaceId = p.id
+        refreshReadButtons()
+        refreshReadFill()
+        val first = ReadAlongText.sentenceAt(r.sentences, from)
+        if (first < 0) {
+            endReading()
+            return
+        }
+        if (from == 0) {
+            actions.speak("${p.title}.", onStarted = {}) { completed ->
+                if (readAlong !== r) return@speak
+                if (completed) readSentence(r, first, r.sentences[first].first) else endReading()
+            }
+        } else {
+            readSentence(r, first, maxOf(from, r.sentences[first].first))
+        }
+    }
+
+    private fun readSentence(r: ReadAlong, i: Int, from: Int) {
+        val range = r.sentences[i]
+        val end = range.last + 1
+        r.pos = from
+        refreshReadFill()
+        actions.speak(r.text.substring(from, end), onStarted = {
+            if (readAlong !== r) return@speak
+            r.sentenceStartedAt = SystemClock.uptimeMillis()
+            r.animator?.cancel()
+            // 끝 글자는 다 읽었다는 알림이 오면 채운다(어림이 빨라 앞질러 채우지 않게).
+            val estimate = ((end - from) / charsPerMs).toLong().coerceAtLeast(1)
+            r.animator = ValueAnimator.ofInt(from, end - 1).apply {
+                duration = estimate
+                interpolator = LinearInterpolator()
+                addUpdateListener {
+                    val v = it.animatedValue as Int
+                    if (readAlong === r && v != r.pos) {
+                        r.pos = v
+                        refreshReadFill()
+                    }
+                }
+                start()
+            }
+        }) { completed ->
+            if (readAlong !== r) return@speak
+            r.animator?.cancel()
+            if (!completed) {
+                endReading()
+                return@speak
+            }
+            val took = SystemClock.uptimeMillis() - r.sentenceStartedAt
+            if (r.sentenceStartedAt > 0 && took > 300) {
+                charsPerMs = (charsPerMs + (end - from).toDouble() / took) / 2
+            }
+            r.pos = end
+            refreshReadFill()
+            if (i + 1 < r.sentences.size) readSentence(r, i + 1, r.sentences[i + 1].first) else endReading()
+        }
+    }
+
+    /** 이전·현재·다음 화면의 소개글 색을 읽은 만큼 채운다. 읽는 중이 아니면 원래 색으로. */
+    private fun refreshReadFill() {
+        slots.forEach { slot -> slot?.findViewById<TextView>(R.id.overviewText)?.let(::applyReadFill) }
+    }
+
+    private fun applyReadFill(tv: TextView) {
+        val r = readAlong
+        val text = tv.tag as? String ?: return
+        if (r == null || tv.getTag(R.id.overviewText) != r.placeId || text != r.text) {
+            tv.text = text
+            return
+        }
+        tv.text = SpannableString(text).apply {
+            val read = r.pos.coerceIn(0, text.length)
+            if (read > 0) setSpan(ForegroundColorSpan(READ_COLOR), 0, read, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            if (read < text.length) setSpan(ForegroundColorSpan(UNREAD_COLOR), read, text.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        }
+    }
+
+    /** 이전·현재·다음 화면의 읽어주기 버튼을 지금 읽는 장소에 맞춘다. */
+    private fun refreshReadButtons() {
+        slots.forEach { slot ->
+            slot?.findViewById<Button>(R.id.btnRead)?.let { styleReadButton(it, it.tag != null && it.tag == readingPlaceId) }
+        }
+    }
+
+    private fun styleReadButton(button: Button, reading: Boolean) {
+        button.text = if (reading) "그만읽기" else "읽어주기"
+        button.setCompoundDrawablesRelativeWithIntrinsicBounds(if (reading) R.drawable.ic_stop else R.drawable.ic_volume, 0, 0, 0)
     }
 
     private fun bindSave(v: View, p: Place) {
@@ -366,8 +519,29 @@ class PlaceDetailScreen(
 
         d.overview?.let { overview ->
             v.findViewById<View>(R.id.overviewSection).visibility = View.VISIBLE
-            v.findViewById<TextView>(R.id.overviewText).text = overview
-            v.findViewById<View>(R.id.btnRead).setOnClickListener { actions.speak("${p.title}. $overview") }
+            v.findViewById<TextView>(R.id.overviewText).apply {
+                // 원문과 장소를 붙여 두고, 읽는 중이면 읽은 만큼 흰색으로 채운다.
+                tag = overview
+                setTag(R.id.overviewText, p.id)
+                applyReadFill(this)
+                // 글자를 누르면 그 낱말부터 읽는다. 읽는 중이면 그 자리로 옮겨 이어 읽는다.
+                val taps = GestureDetector(activity, object : GestureDetector.SimpleOnGestureListener() {
+                    override fun onDown(e: MotionEvent) = true
+                    override fun onSingleTapUp(e: MotionEvent): Boolean {
+                        val offset = getOffsetForPosition(e.x, e.y)
+                        startReading(p, overview, ReadAlongText.wordStart(overview, offset))
+                        return true
+                    }
+                })
+                setOnTouchListener { _, ev -> taps.onTouchEvent(ev) }
+            }
+            v.findViewById<Button>(R.id.btnRead).apply {
+                tag = p.id
+                styleReadButton(this, p.id == readingPlaceId)
+                setOnClickListener {
+                    if (readingPlaceId == p.id) stopReading() else startReading(p, overview, 0)
+                }
+            }
         }
 
         if (d.courseStops.isNotEmpty()) {
@@ -579,6 +753,9 @@ class PlaceDetailScreen(
     companion object {
         private const val TAG = "PlaceDetailScreen"
         private const val SLIDESHOW_INTERVAL_MS = 5_000L
+        /** 따라 읽기: 읽은 글자는 흰색, 아직 안 읽은 글자는 흐리게. */
+        private const val READ_COLOR = 0xFFFFFFFF.toInt()
+        private const val UNREAD_COLOR = 0x73FFFFFF
         private val PHONE = Regex("""\d{2,4}-\d{3,4}-\d{4}""")
 
         /** "한국농어촌공사 화성·수원지사 031-240-4800" → "031-240-4800" */

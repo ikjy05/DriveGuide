@@ -41,6 +41,8 @@ class TourApiClient(private val serviceKey: String) {
         type: PlaceType,
         radiusMeters: Int = 10_000,
         limit: Int = 10,
+        /** 거리순으로 [limit]곳씩 나눈 쪽 번호(1부터). 스크롤하며 더 먼 곳을 이어 받을 때 쓴다. */
+        page: Int = 1,
     ): List<Place> = request(
         "locationBasedList2",
         mapOf(
@@ -50,7 +52,7 @@ class TourApiClient(private val serviceKey: String) {
             "radius" to radiusMeters.coerceAtMost(20_000).toString(),
             "contentTypeId" to type.contentTypeId.toString(),
             "numOfRows" to limit.toString(),
-            "pageNo" to "1",
+            "pageNo" to page.toString(),
         ),
         type,
     ).places

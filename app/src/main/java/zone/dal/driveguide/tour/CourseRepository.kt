@@ -41,11 +41,24 @@ class CourseRepository(
         longitude: Double,
         radiusMeters: Double = 60_000.0,
         limit: Int = 5,
+    ): List<Place> = page(latitude, longitude, offset = 0, limit = limit, radiusMeters = radiusMeters)
+
+    /**
+     * [radiusMeters] 안의 코스를 가까운 순으로 늘어놓고 [offset]번째부터 [limit]개를 준다.
+     * 코스 탭에서 스크롤하는 만큼 이어 붙일 때 쓴다. 사진 조회는 돌려주는 코스에 대해서만 한다.
+     */
+    suspend fun page(
+        latitude: Double,
+        longitude: Double,
+        offset: Int,
+        limit: Int,
+        radiusMeters: Double = 60_000.0,
     ): List<Place> = withImages(
         load()
             .map { it.copy(distanceMeters = distanceMeters(latitude, longitude, it.latitude, it.longitude)) }
             .filter { it.distanceMeters <= radiusMeters }
             .sortedBy { it.distanceMeters }
+            .drop(offset)
             .take(limit)
     )
 

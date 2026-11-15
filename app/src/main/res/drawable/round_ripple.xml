@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 머리말 아이콘 버튼: 평소엔 투명, 누르면 둥근 물결 -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="@color/pressed">
+    <item android:id="@android:id/mask">
+        <shape android:shape="oval">
+            <solid android:color="#FFFFFFFF" />
+        </shape>
+    </item>
+</ripple>

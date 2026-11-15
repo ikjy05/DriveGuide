@@ -2,6 +2,7 @@ package zone.dal.driveguide
 
 import android.util.Log
 import zone.dal.driveguide.navi.VehicleLocation
+import zone.dal.driveguide.tour.CoursePager
 import zone.dal.driveguide.tour.CourseRepository
 import zone.dal.driveguide.tour.Place
 import zone.dal.driveguide.tour.PlaceType
@@ -45,7 +46,7 @@ class RecommendationEngine(
             val a = async { tourApi.nearby(location.latitude, location.longitude, PlaceType.ATTRACTION, 10_000) }
             // 코스 캐시를 받지 못해도 관광지 추천은 보여준다.
             val c = async {
-                runCatching { courseRepository.nearby(location.latitude, location.longitude) }
+                runCatching { courseRepository.nearby(location.latitude, location.longitude, limit = CoursePager.PAGE_SIZE) }
                     .onFailure { Log.w(TAG, "Course lookup failed", it) }
                     .getOrDefault(emptyList())
             }

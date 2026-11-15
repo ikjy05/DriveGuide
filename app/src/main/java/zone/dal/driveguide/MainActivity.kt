@@ -9,14 +9,17 @@ import android.content.res.Configuration
 import android.graphics.Typeface
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
-import android.speech.tts.TextToSpeech
 import android.util.Log
+import android.util.TypedValue
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.Button
 import com.google.android.material.button.MaterialButton
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import zone.dal.driveguide.navi.CourseLeg
@@ -27,6 +30,9 @@ import zone.dal.driveguide.route.UpcomingEngine
 import zone.dal.driveguide.route.UpcomingSection
 import zone.dal.driveguide.saved.SavedPlaces
 import zone.dal.driveguide.tour.CourseRepository
+import zone.dal.driveguide.tour.CoursePager
+import zone.dal.driveguide.tour.MorePager
+import zone.dal.driveguide.tour.NearbyPager
 import zone.dal.driveguide.tour.Place
 import zone.dal.driveguide.tour.PlaceType
 import zone.dal.driveguide.tour.TourApiClient
@@ -36,12 +42,16 @@ import zone.dal.driveguide.ui.DrivingRestriction
 import zone.dal.driveguide.ui.ImageLoader
 import zone.dal.driveguide.ui.PlaceDetailScreen
 import zone.dal.driveguide.ui.Placeholder
+import zone.dal.driveguide.voice.NewPlaceTracker
+import zone.dal.driveguide.voice.Speaker
+import zone.dal.driveguide.voice.VoiceSettings
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
-import java.util.Locale
 
 class MainActivity : Activity() {
 
@@ -55,14 +65,30 @@ class MainActivity : Activity() {
     private lateinit var detailScreen: PlaceDetailScreen
     private lateinit var drivingRestriction: DrivingRestriction
     private lateinit var savedPlaces: SavedPlaces
-    private var tts: TextToSpeech? = null
+    private lateinit var tourApi: TourApiClient
+    private lateinit var courseRepository: CourseRepository
+    /** 관광지 탭: 스크롤하는 만큼 더 먼 곳을 이어 붙인다(최대 20km). 새 추천을 받으면 새로 만든다. */
+    private var nearbyPager: NearbyPager? = null
+    /** 코스 탭: 스크롤하는 만큼 60km 안의 코스를 가까운 순으로 이어 붙인다. */
+    private var coursePager: CoursePager? = null
+    private var loadMoreJob: Job? = null
+    /** 이어 받기에 실패한 때. 스크롤할 때마다 바로 다시 요청하지 않도록 잠시 쉰다. */
+    private var loadMoreFailedAt = 0L
+    /** 관광지·코스 목록 맨 아래 문구(더 찾는 중 / 다 봤어요). */
+    private var listFooter: TextView? = null
+    /** 지역 안내·읽어주기·코스 안내 음성(Pleos TTS SDK). */
+    private lateinit var speaker: Speaker
+    /** 이미 음성으로 안내한 장소. 같은 곳을 되풀이해 말하지 않는다. */
+    private val announcedPlaces = NewPlaceTracker()
 
     private lateinit var regionText: TextView
     private lateinit var statusText: TextView
     private lateinit var listContainer: LinearLayout
     private lateinit var tabButtons: Map<Tab, Button>
-    /** 하단 툴바 탭의 아이콘. 선택된 탭에만 보인다. */
+    /** 하단 툴바 탭의 아이콘. 모든 탭에 보인다. */
     private lateinit var tabIcons: Map<Tab, android.graphics.drawable.Drawable?>
+    /** 하단 탭 이름. 창이 좁으면 글자를 숨기고 아이콘만 보이므로 원래 이름을 따로 들고 있는다. */
+    private lateinit var tabLabels: Map<Tab, CharSequence>
 
     private var latest: Recommendation? = null
     private var upcoming: List<UpcomingSection>? = null
@@ -100,12 +126,10 @@ class MainActivity : Activity() {
             requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 0)
         }
 
-        tts = TextToSpeech(this) { status ->
-            if (status == TextToSpeech.SUCCESS) tts?.language = Locale.KOREAN
-        }
+        speaker = Speaker(this)
 
-        val tourApi = TourApiClient(BuildConfig.TOUR_API_KEY)
-        val courseRepository = CourseRepository(this, tourApi)
+        tourApi = TourApiClient(BuildConfig.TOUR_API_KEY)
+        courseRepository = CourseRepository(this, tourApi)
         engine = RecommendationEngine(tourApi, courseRepository)
         upcomingEngine = UpcomingEngine(tourApi, courseRepository)
         navi = NaviBridge(this)
@@ -121,8 +145,11 @@ class MainActivity : Activity() {
             override fun startCourse(course: Place, stops: List<Place>) {
                 navi.startCourse(stops)
             }
-            override fun speak(text: String) {
-                tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "detail")
+            override fun speak(text: String, onStarted: () -> Unit, onEnded: (completed: Boolean) -> Unit) {
+                speaker.speak(text, onStarted, onEnded)
+            }
+            override fun stopSpeaking() {
+                speaker.stop()
             }
             override fun distanceLabel(place: Place): String? =
                 cards.firstOrNull { it.place == place }?.let(::distanceText) ?: liveDistanceText(place)
@@ -184,6 +211,17 @@ class MainActivity : Activity() {
         regionText = findViewById(R.id.regionText)
         statusText = findViewById(R.id.statusText)
         listContainer = findViewById(R.id.listContainer)
+        findViewById<ImageButton>(R.id.autoVoiceButton).apply {
+            styleAutoVoiceButton(this)
+            setOnClickListener {
+                val on = !VoiceSettings.autoAnnounce(this@MainActivity)
+                VoiceSettings.setAutoAnnounce(this@MainActivity, on)
+                styleAutoVoiceButton(this)
+                Toast.makeText(this@MainActivity, if (on) "자동 음성 안내를 켰어요" else "자동 음성 안내를 껐어요", Toast.LENGTH_SHORT).show()
+            }
+        }
+        // 관광지 목록 끝에 가까워지면 더 먼 곳을 이어 받는다.
+        findViewById<ScrollView>(R.id.listScroll).setOnScrollChangeListener { _, _, _, _, _ -> maybeLoadMore() }
         tabButtons = mapOf(
             Tab.NEARBY to findViewById(R.id.tabAttractions),
             Tab.COURSES to findViewById(R.id.tabCourses),
@@ -191,6 +229,7 @@ class MainActivity : Activity() {
             Tab.SAVED to findViewById(R.id.tabSaved),
         )
         tabIcons = tabButtons.mapValues { (_, button) -> (button as? MaterialButton)?.icon }
+        tabLabels = tabButtons.mapValues { (_, button) -> button.text }
         tabButtons.forEach { (tab, button) -> button.setOnClickListener { selectTab(tab) } }
         selectTab(selectedTab)
     }
@@ -204,34 +243,64 @@ class MainActivity : Activity() {
         savedPlaces.stopObserving(savedListener)
         drivingRestriction.stop()
         navi.stop()
-        tts?.shutdown()
+        speaker.release()
         scope.cancel()
         super.onDestroy()
     }
 
+    /**
+     * 앞의 안내를 끊고 [text]를 읽는다. 메인 스레드를 막지 않는다.
+     * 앱 시작 직후 엔진이 아직 붙지 않았으면 버리지 않고, 붙는 대로 읽는다(첫 지역 안내가 사라지지 않게).
+     */
+    private fun speak(text: String) {
+        speaker.speak(text)
+    }
+
     private fun onRecommendation(rec: Recommendation) {
         latest = rec
+        // 새 위치 기준 추천이므로 이어 붙이던 목록을 처음부터 다시 시작한다.
+        loadMoreJob?.cancel()
+        loadMoreJob = null
+        nearbyPager = currentLocation?.let { loc ->
+            NearbyPager(rec.attractions) { radius, page ->
+                tourApi.nearby(loc.latitude, loc.longitude, PlaceType.ATTRACTION, radius, page = page)
+            }
+        }
+        coursePager = currentLocation?.let { loc ->
+            CoursePager(rec.courses) { offset, limit ->
+                courseRepository.page(loc.latitude, loc.longitude, offset, limit)
+            }
+        }
         regionText.text = rec.region ?: "현재 위치 주변"
+        // 새 추천으로 다시 그려도 보던 자리를 지킨다.
+        val scroll = findViewById<ScrollView>(R.id.listScroll)
+        val y = scroll.scrollY
         render()
+        scroll.post { scroll.scrollTo(0, y) }
 
-        if (rec.regionChanged && rec.region != null) {
-            val name = rec.region.substringAfterLast(' ')
-            val message = StringBuilder().apply {
-                append("${name}에 진입했습니다.")
-                if (rec.attractions.isNotEmpty()) append(" 주변 추천 관광지 ${rec.attractions.size}곳이 있습니다.")
-                if (rec.courses.isNotEmpty()) append(" ${rec.courses.first().title} 코스도 가까워요.")
-            }
-            // 방향을 알면 지나친 쪽이 아닌 장소를 먼저 안내한다.
-            val top = sortAhead(rec.attractions).firstOrNull()
-            val topDirection = top?.let { relativeTo(it) }
-            if (top != null && topDirection != null) {
-                message.append(" ${Direction.label(topDirection)} ${spokenDistance(top.distanceMeters)}에 ${top.title}이 있어요.")
-            }
-            tts?.speak(message.toString(), TextToSpeech.QUEUE_FLUSH, null, "region")
-            top?.let {
-                val where = listOfNotNull(formatDistance(it.distanceMeters), topDirection?.let(Direction::label)).joinToString(" ")
-                notifier.notify("${name} 진입", it, "$where · 추천 관광지 ${rec.attractions.size}곳", force = true)
-            }
+        // 지역 경계를 넘을 때마다가 아니라, 아직 안내하지 않은 장소가 생겼을 때만 알린다.
+        val newAttractions = announcedPlaces.takeNew(rec.attractions)
+        val newCourses = announcedPlaces.takeNew(rec.courses)
+        if (newAttractions.isEmpty() && newCourses.isEmpty()) return
+
+        val name = rec.region?.substringAfterLast(' ')
+        val message = StringBuilder().apply {
+            if (rec.regionChanged && name != null) append("${name}에 진입했습니다. ")
+            if (newAttractions.isNotEmpty()) append("새 추천 관광지 ${newAttractions.size}곳이 있습니다.")
+            if (newCourses.isNotEmpty()) append(" ${newCourses.first().title} 코스도 가까워요.")
+        }
+        // 방향을 알면 지나친 쪽이 아닌 장소를 먼저 안내한다.
+        val top = sortAhead(newAttractions).firstOrNull()
+        val topDirection = top?.let { relativeTo(it) }
+        if (top != null && topDirection != null) {
+            message.append(" ${Direction.label(topDirection)} ${spokenDistance(top.distanceMeters)}에 ${top.title}이 있어요.")
+        }
+        // 꺼져 있어도 안내한 것으로 기록했으므로(takeNew) 다시 켰을 때 밀린 안내가 한꺼번에 나오지 않는다.
+        if (VoiceSettings.autoAnnounce(this)) speak(message.toString().trim())
+        top?.let {
+            val where = listOfNotNull(formatDistance(it.distanceMeters), topDirection?.let(Direction::label)).joinToString(" ")
+            val title = if (rec.regionChanged && name != null) "${name} 진입" else "새 추천 관광지"
+            notifier.notify(title, it, "$where · 새 추천 ${newAttractions.size}곳", force = true)
         }
     }
 
@@ -245,11 +314,26 @@ class MainActivity : Activity() {
     }
 
     private fun selectTab(tab: Tab) {
+        // 다른 탭 목록을 이어 받던 중이면 그만둔다(받던 쪽은 버려지고, 돌아오면 다시 받는다).
+        if (tab != selectedTab) {
+            loadMoreJob?.cancel()
+            loadMoreJob = null
+        }
         selectedTab = tab
         // 밑줄(tab_bg)과 글자색(tab_text)은 selected 상태에 따라 바뀐다. 굵기만 직접 바꾼다.
+        // 창이 좁으면(분할 화면에서 앱 쪽이 1200dp 미만) 탭 네 개가 넘치지 않게 선택된 탭만 이름을 보이고
+        // 나머지는 아이콘만 둔다. 숨긴 이름은 접근성 설명으로 남긴다.
+        val iconOnly = resources.configuration.screenWidthDp < WIDE_WINDOW_DP
+        val density = resources.displayMetrics.density
         tabButtons.forEach { (t, button) ->
             button.isSelected = t == tab
-            (button as? MaterialButton)?.icon = if (t == tab) tabIcons[t] else null
+            val labeled = !iconOnly || t == tab
+            button.text = if (labeled) tabLabels[t] else ""
+            button.contentDescription = tabLabels[t]
+            (button as? MaterialButton)?.apply {
+                icon = tabIcons[t]
+                iconPadding = if (labeled) (14 * density).toInt() else 0
+            }
             button.setTypeface(null, if (t == tab) Typeface.BOLD else Typeface.NORMAL)
         }
         render()
@@ -258,16 +342,25 @@ class MainActivity : Activity() {
     private fun render() {
         listContainer.removeAllViews()
         cards.clear()
+        listFooter = null
         showBadges = selectedTab == Tab.UPCOMING
         when (selectedTab) {
-            Tab.NEARBY -> renderPlaces(latest?.attractions ?: return) {
-                addEmptyState(R.drawable.ic_place_large, "주변에 추천할 관광지가 없어요", "이동하면 새 지역의 관광지를 다시 찾아볼게요.")
+            Tab.NEARBY -> {
+                val places = nearbyPager?.places ?: latest?.attractions ?: return
+                renderPlaces(places) {
+                    addEmptyState(R.drawable.ic_place_large, "주변에 추천할 관광지가 없어요", "이동하면 새 지역의 관광지를 다시 찾아볼게요.")
+                }
+                if (places.isNotEmpty()) addListFooter()
             }
-            Tab.COURSES -> renderPlaces(latest?.courses ?: return) {
-                addEmptyState(
-                    R.drawable.ic_route_empty, "가까운 여행코스가 없어요", "반경 60km 안에서 출발하는 코스를 찾지 못했어요.",
-                    "주변 관광지 보기",
-                ) { selectTab(Tab.NEARBY) }
+            Tab.COURSES -> {
+                val places = coursePager?.places ?: latest?.courses ?: return
+                renderPlaces(places) {
+                    addEmptyState(
+                        R.drawable.ic_route_empty, "가까운 여행코스가 없어요", "반경 60km 안에서 출발하는 코스를 찾지 못했어요.",
+                        "주변 관광지 보기",
+                    ) { selectTab(Tab.NEARBY) }
+                }
+                if (places.isNotEmpty()) addListFooter()
             }
             Tab.UPCOMING -> renderUpcoming()
             Tab.SAVED -> renderSaved()
@@ -458,11 +551,18 @@ class MainActivity : Activity() {
     }
 
     /** 코스 구간 안내가 시작될 때 들르는 순서를 알려준다. */
+    private fun styleAutoVoiceButton(button: ImageButton) {
+        val on = VoiceSettings.autoAnnounce(this)
+        button.setImageResource(if (on) R.drawable.ic_volume else R.drawable.ic_volume_off)
+        button.contentDescription = if (on) "자동 음성 안내 끄기" else "자동 음성 안내 켜기"
+        button.alpha = if (on) 1f else 0.55f
+    }
+
     private fun announceCourseLeg(leg: CourseLeg) {
         val names = leg.stops.joinToString(" → ") { it.title }
         val rest = if (leg.remaining > 0) " 도착하면 남은 ${leg.remaining}곳을 이어서 안내합니다." else ""
         Toast.makeText(this, "코스 안내: $names", Toast.LENGTH_LONG).show()
-        tts?.speak("코스 안내를 시작합니다. ${leg.stops.joinToString(", ") { it.title }} 순서로 들릅니다.$rest", TextToSpeech.QUEUE_FLUSH, null, "course")
+        if (VoiceSettings.autoAnnounce(this)) speak("코스 안내를 시작합니다. ${leg.stops.joinToString(", ") { it.title }} 순서로 들릅니다.$rest")
     }
 
     private fun addWaypoint(place: Place) {
@@ -473,7 +573,79 @@ class MainActivity : Activity() {
     private fun formatDistance(meters: Double): String =
         if (meters >= 1000) "%.1fkm".format(meters / 1000) else "${meters.toInt()}m"
 
+    /** 지금 탭에서 스크롤로 이어 붙이는 목록. 관광지·코스 탭에만 있다. */
+    private fun pagerForTab(): MorePager? = when (selectedTab) {
+        Tab.NEARBY -> nearbyPager
+        Tab.COURSES -> coursePager
+        else -> null
+    }
+
+    /** 관광지·코스 목록 맨 아래: 더 찾는 중이거나, 반경 안을 다 봤다고 알린다. 목록이 화면보다 짧으면 바로 더 받는다. */
+    private fun addListFooter() {
+        val density = resources.displayMetrics.density
+        listFooter = TextView(this).apply {
+            gravity = Gravity.CENTER
+            setTextColor(getColor(R.color.text_secondary))
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 24f)
+            setPadding(0, (16 * density).toInt(), 0, (24 * density).toInt())
+        }.also(listContainer::addView)
+        updateListFooter()
+        listContainer.post { maybeLoadMore() }
+    }
+
+    private fun updateListFooter() {
+        val footer = listFooter ?: return
+        val pager = pagerForTab()
+        val what = if (selectedTab == Tab.COURSES) "코스" else "관광지"
+        footer.text = when {
+            pager == null -> ""
+            loadMoreJob?.isActive == true -> "더 먼 ${what}를 찾는 중…"
+            pager.done -> {
+                val km = (pager as? NearbyPager)?.radiusMeters?.div(1000) ?: CoursePager.RADIUS_KM
+                "${km}km 안의 ${what}를 모두 봤어요"
+            }
+            System.currentTimeMillis() - loadMoreFailedAt < LOAD_MORE_RETRY_MS -> "더 불러오지 못했어요. 잠시 뒤 다시 내려 보세요"
+            else -> ""
+        }
+        footer.visibility = if (footer.text.isEmpty()) View.GONE else View.VISIBLE
+    }
+
+    /** 관광지·코스 탭에서 목록 끝이 한 화면 안으로 들어오면 다음 곳들을 받아 붙인다. */
+    private fun maybeLoadMore() {
+        if (detailScreen.isShowing) return
+        val tab = selectedTab
+        val pager = pagerForTab() ?: return
+        if (pager.done || loadMoreJob?.isActive == true) return
+        if (System.currentTimeMillis() - loadMoreFailedAt < LOAD_MORE_RETRY_MS) return
+        val scroll = findViewById<ScrollView>(R.id.listScroll)
+        val content = scroll.getChildAt(0) ?: return
+        val remaining = content.height + scroll.paddingBottom - (scroll.scrollY + scroll.height)
+        if (remaining > scroll.height) return
+        loadMoreJob = scope.launch {
+            try {
+                updateListFooter()
+                pager.loadMore()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.w(TAG, "Load more failed", e)
+                loadMoreFailedAt = System.currentTimeMillis()
+            }
+            // 받는 사이 새 추천이 왔거나(다른 목록) 탭을 바꿨으면 그리지 않는다.
+            if (pager !== pagerForTab() || selectedTab != tab) return@launch
+            loadMoreJob = null
+            // 다시 그려도 보던 자리를 지킨다. 받는 사이 분할 화면 전환으로 뷰가 바뀌었을 수 있어 다시 찾는다.
+            val current = findViewById<ScrollView>(R.id.listScroll)
+            val y = current.scrollY
+            render()
+            current.post { current.scrollTo(0, y) }
+        }
+    }
+
     companion object {
         private const val TAG = "DriveGuide"
+        private const val LOAD_MORE_RETRY_MS = 5_000L
+        /** layout-w1200dp와 같은 기준. 이보다 좁은 창에서는 하단 탭을 아이콘만 보인다. */
+        private const val WIDE_WINDOW_DP = 1200
     }
 }
